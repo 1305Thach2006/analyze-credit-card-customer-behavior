@@ -1,0 +1,4 @@
+﻿Customer_ID,Cluster,Dominant_Category,Monthly_Spending,Credit_Utilization,Credit_Score,Payment_Ratio,Calculated_Reward_Points,Risk_Status,Nearest_Neighbors
+CC100002,3,Grocery_Spending,115895.71,0.38,549,0.35,348,HIGH_RISK_CREDIT_SCORE,"['CC100002', 'CC118285', 'CC148998', 'CC102242', 'CC138362']"
+CC100000,0,Dining_Spending,36733.49,0.7,492,0.46,257,HIGH_RISK_CREDIT_SCORE,"['CC100000', 'CC145883', 'CC144034', 'CC105965', 'CC119892']"
+CC100007,0,Grocery_Spending,24788.08,0.5,556,0.61,50,SAFE,"['CC100007', 'CC126329', 'CC113028', 'CC104569', 'CC147539']"
