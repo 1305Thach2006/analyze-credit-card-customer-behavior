@@ -1,9 +1,9 @@
 # Import mo hinh Hoi quy tuyen tinh LinearRegression tu scikit-learn
 from sklearn.linear_model import LinearRegression
-# Import mo hinh Cay quyet dinh DecisionTreeRegressor tu scikit-learn
-from sklearn.tree import DecisionTreeRegressor
 # Import mo hinh Random Forest Regressor tap hop cay quyet dinh
 from sklearn.ensemble import RandomForestRegressor
+# Import mo hinh Gradient Boosting toi uu LightGBM Regressor
+from lightgbm import LGBMRegressor
 # Import cac chi so danh gia do chinh xac hoi quy: R2, RMSE, MAE
 from sklearn.metrics import r2_score, root_mean_squared_error, mean_absolute_error
 # Import ham chia tach du lieu train_test_split tu scikit-learn
@@ -21,11 +21,15 @@ class RewardValidationEngine:
     def __init__(self, random_state: int = 42):
         # Luu gia tri random_state de co dinh ket qua
         self.random_state = random_state
-        # Khoi tao tu dien chua 3 mo hinh Machine Learning co dien de so sanh doi chuan
+        # Khoi tao tu dien chua 3 mo hinh Machine Learning co dien va tang tien de so sanh doi chuan
         self.models = {
+            # Mo hinh Hoi quy tuyen tinh dong vai tro mo hinh co so
             'Linear Regression': LinearRegression(),
-            'Decision Tree Regressor': DecisionTreeRegressor(max_depth=10, random_state=self.random_state),
-            'Random Forest Regressor': RandomForestRegressor(n_estimators=50, max_depth=12, random_state=self.random_state, n_jobs=-1)
+            # Mo hinh Random Forest tap hop cay song song triet tieu phuong sai
+            'Random Forest Regressor': RandomForestRegressor(n_estimators=50, max_depth=12, random_state=self.random_state, n_jobs=-1),
+            # Mo hinh LightGBM Gradient Boosting toi uu chuoi phan du
+            'LightGBM Regressor': LGBMRegressor(n_estimators=100, learning_rate=0.05, random_state=self.random_state, verbose=-1, n_jobs=-1)
+        # Ket thuc khoi danh sach hoac tu dien
         }
         # Bang luu ket qua danh gia doi chuan
         self.benchmark_results = None
@@ -33,7 +37,7 @@ class RewardValidationEngine:
     # Ham thuc hien huan luyen va danh gia doi chuan 3 mo hinh Machine Learning
     def run_benchmark(self, X: np.ndarray, y: np.ndarray) -> pd.DataFrame:
         # In thong bao bat dau qua trinh doi chuan mo hinh
-        print('[VALIDATION] Bat dau kiem chung he thong bang Linear Regression vs Decision Tree vs Random Forest...')
+        print('[VALIDATION] Bat dau kiem chung he thong bang Linear Regression vs Random Forest vs LightGBM...')
         # Chia tap du lieu thanh tap Huan luyen Train (80%) va tap Kiem thu Test (20%)
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.20, random_state=self.random_state)
         # Danh sach luu ket qua do luong cua tung mo hinh
@@ -56,10 +60,15 @@ class RewardValidationEngine:
             print(f'[VALIDATION] -> {model_name}: R2 = {r2:.4f} | RMSE = {rmse:.2f} | MAE = {mae:.2f}')
             # Luu thong so danh gia vao danh sach ket qua
             results_list.append({
+                # Ten mo hinh dang danh gia
                 'Model': model_name,
+                # He so xac dinh R2 Score
                 'R2_Score': round(r2, 4),
+                # Sai so can quan phuong trung binh RMSE
                 'RMSE': round(rmse, 2),
+                # Sai so tuyet doi trung binh MAE
                 'MAE': round(mae, 2)
+            # Ket thuc khoi danh sach hoac tu dien
             })
         # Chuyen danh sach ket qua thanh DataFrame cua pandas
         self.benchmark_results = pd.DataFrame(results_list)

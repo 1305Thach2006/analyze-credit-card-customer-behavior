@@ -1,4 +1,4 @@
-﻿# Import thu vien os de thao tac voi thu muc va duong dan tep
+# Import thu vien os de thao tac voi thu muc va duong dan tep
 import os
 # Import thu vien sys de cau hinh duong dan module trong he thong
 import sys
@@ -12,12 +12,12 @@ from sklearn.preprocessing import StandardScaler
 # Them thu muc hien tai vao duong dan tim kiem module cua Python
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-# Import cac thiet lap cau hinh tu config/settings.py
-from config.settings import (
-    DATA_PATH, OUTPUT_DIR, FIGURES_DIR, REPORTS_DIR,
-    RANDOM_STATE, N_CLUSTERS, SPENDING_CATEGORIES, RATIO_CATEGORIES,
-    BASE_REWARD_MULTIPLIERS, EXPENSE_BONUS_FACTORS, RISK_THRESHOLDS
-)
+# Import cac thiet lap duong dan tu config/settings.py
+from config.settings import DATA_PATH, OUTPUT_DIR, FIGURES_DIR, REPORTS_DIR
+# Import cac tham so thuat toan va trong so tu config/settings.py
+from config.settings import RANDOM_STATE, N_CLUSTERS, SPENDING_CATEGORIES, RATIO_CATEGORIES
+# Import cac he so thuong va nguong rui ro tu config/settings.py
+from config.settings import BASE_REWARD_MULTIPLIERS, EXPENSE_BONUS_FACTORS, RISK_THRESHOLDS
 
 # Import ham nap du lieu tu data_pipeline/loader.py
 from data_pipeline.loader import load_credit_card_data
@@ -27,37 +27,34 @@ from data_pipeline.feature_engineering import engineer_credit_features
 from data_pipeline.preprocessor import preprocess_features
 
 # Import cac ham ve bieu do tu eda/visualizer.py
-from eda.visualizer import (
-    plot_correlation_heatmap, plot_category_spending_boxplot,
-    plot_pca_clusters, plot_model_benchmark
-)
+from eda.visualizer import plot_correlation_heatmap, plot_category_spending_boxplot, plot_pca_clusters, plot_model_benchmark
 
 # Import bo phan cum khach hang K-Means va PCA tu models/clustering.py
 from models.clustering import CustomerClustering
-# Import bo tinh diem va phan tich hanh vi tu models/recommender.py
+# Import dong co tinh diem thuong va goi y tu models/recommender.py
 from models.recommender import CustomerBehaviorScorer
-# Import dong co kiem chung mo hinh Machine Learning tu models/validation_models.py
+# Import lop doi chuan cac mo hinh Machine Learning tu models/validation_models.py
 from models.validation_models import RewardValidationEngine
 
-# Ham luu DataFrame ra tep CSV an toan tranh loi PermissionError khi tep dang mo trong Excel
+# Ham luu DataFrame an toan tranh loi bi khoa tep khi mo tren Excel
 def save_dataframe_safely(df: pd.DataFrame, file_path: str) -> str:
-    # Thu thuc hien ghi tep CSV binh thuong
+    # Khoi lenh thu luu tep CSV theo duong dan goc
     try:
-        # Ghi du lieu ra tap tin CSV voi ma hoa utf-8-sig
-        df.to_csv(file_path, index=False, encoding='utf-8-sig')
+        # Ghi du lieu DataFrame ra tep CSV khong kem cot chi muc
+        df.to_csv(file_path, index=False)
         # In thong bao luu tep thanh cong
         print(f'[REPORT] Da luu thanh cong bao cao tai: {file_path}')
         # Tra ve duong dan tep da luu
         return file_path
-    # Bat loi khi tep tin dang bi khoa boi ung dung khac nhu Microsoft Excel
+    # Bat ngoai le PermissionError khi tep dang bi khoa boi chuong trinh khac
     except PermissionError:
-        # Tach duong dan thanh phan goc va duoi mo rong
-        base_name, ext = os.path.splitext(file_path)
-        # Tao ten tep thay the voi hau to _updated de khong lam gian doan chuong trinh
-        alt_path = f'{base_name}_updated{ext}'
-        # Ghi du lieu ra ten tep thay the
-        df.to_csv(alt_path, index=False, encoding='utf-8-sig')
-        # In thong bao tep goc dang mo trong Excel va da luu ra tep moi
+        # Tach ten tep va phan mo rong
+        base, ext = os.path.splitext(file_path)
+        # Tao duong dan tep thay the voi hau to _updated
+        alt_path = f'{base}_updated{ext}'
+        # Ghi du lieu DataFrame sang tep thay the
+        df.to_csv(alt_path, index=False)
+        # In canh bao nguoi dung ve viec tep bi khoa va luu sang duong dan moi
         print(f'[CANH BAO] Tap tin {os.path.basename(file_path)} dang mo trong Excel. Da luu vao: {alt_path}')
         # Tra ve duong dan tep moi
         return alt_path
@@ -78,20 +75,33 @@ def main():
     raw_df = load_credit_card_data(DATA_PATH)
 
     # -------------------------------------------------------------
-    # BUOC 2: KY THUAT TAO DAC TRUNG (FEATURE ENGINEERING)
+    # BUOC 2: CHE TAC DAC TRUNG (FEATURE ENGINEERING)
     # -------------------------------------------------------------
-    # Goi ham tinh toan ty trong chi tieu va co canh bao rui ro
+    # Tao cac ty trong chi tieu va gan co rui ro
     df_engineered = engineer_credit_features(raw_df)
 
     # -------------------------------------------------------------
     # BUOC 3: PHAN TICH THONG KE MO TA VA TRUC QUAN HOA (EDA)
     # -------------------------------------------------------------
-    # In thong bao buoc truc quan hoa du lieu
+    # In thong bao buoc truc quan hoa
     print('\n[BUOC 3] Thuc hien truc quan hoa du lieu EDA...')
-    # Danh sach cac cot dai dien can ve ma tran tuong quan
+    # Danh sach cac cot duoc dua vao ma tran tuong quan
     corr_cols = [
-        'Monthly_Spending', 'Annual_Income', 'Credit_Limit', 'Credit_Utilization',
-        'Credit_Score', 'Payment_Ratio', 'Redemption_Rate', 'Discretionary_Ratio'
+        # Thu nhap hang nam
+        'Annual_Income',
+        # Tong chi tieu hang thang
+        'Monthly_Spending',
+        # Han muc tin dung
+        'Credit_Limit',
+        # Diem tin dung
+        'Credit_Score',
+        # Ty le thanh toan
+        'Payment_Ratio',
+        # Ty trong chi tieu tuy y
+        'Discretionary_Ratio',
+        # Ty trong chi tieu thiet yeu
+        'Essential_Ratio'
+    # Ket thuc khoi danh sach hoac tu dien
     ]
     # Duong dan tap tin anh heatmap tuong quan
     heatmap_file = os.path.join(FIGURES_DIR, 'eda_correlation_heatmap.png')
@@ -109,55 +119,52 @@ def main():
     # In thong bao buoc tien xu ly chuan hoa
     print('\n[BUOC 4] Chuan hoa dac trung hanh vi bang StandardScaler...')
     # Danh sach cac cot dac trung duoc lua chon de dua vao phan cum
-    cluster_features = RATIO_CATEGORIES + [
-        'Credit_Utilization', 'Payment_Ratio', 'Discretionary_Ratio', 'Redemption_Rate'
-    ]
+    cluster_features = RATIO_CATEGORIES + ['Credit_Utilization', 'Payment_Ratio', 'Discretionary_Ratio', 'Redemption_Rate']
     # Thuc hien chuan hoa du lieu bang Z-score thong qua StandardScaler
     X_scaled, scaler, scaled_df = preprocess_features(df_engineered, cluster_features)
 
     # -------------------------------------------------------------
     # BUOC 5: PHAN CUM K-MEANS VA CHIEU KHONG GIAN PCA 2D
     # -------------------------------------------------------------
-    # In thong bao buoc phan cum K-Means
+    # In thong bao buoc phan cum va giam chieu
     print('\n[BUOC 5] Phan cum K-Means va chieu khong gian PCA 2D...')
-    # Khoi tao doi tuong phan cum K-Means
-    cluster_engine = CustomerClustering(n_clusters=N_CLUSTERS, random_state=RANDOM_STATE)
-    # Thuc hien phan cum va gan nhan vao tap du lieu
-    cluster_labels = cluster_engine.fit_predict(X_scaled)
-    # Luu ket qua phan cum vao cot moi cua DataFrame
+    # Khoi tao bo phan cum K-Means voi k=4
+    clustering_model = CustomerClustering(n_clusters=N_CLUSTERS, random_state=RANDOM_STATE)
+    # Huan luyen va gan nhan cum cho 50.000 khach hang
+    cluster_labels = clustering_model.fit_predict(X_scaled)
+    # Gan cot nhan cum vao bang du lieu da qua xu ly dac trung
     df_engineered['Cluster'] = cluster_labels
-    # Danh gia chat luong phan cum bang chi so Silhouette va Davies-Bouldin
-    metrics = cluster_engine.evaluate(X_scaled)
 
-    # Chieu tap du lieu xuong khong gian 2 chieu PCA
-    pca_2d = cluster_engine.fit_transform_pca(X_scaled)
-    # Duong dan luu bieu do phan cum PCA
-    pca_file = os.path.join(FIGURES_DIR, 'pca_customer_clusters.png')
-    # Ve va luu bieu do phan tan PCA
-    plot_pca_clusters(pca_2d, cluster_labels, pca_file)
+    # Danh gia chat luong phan cum qua Silhouette Score va Davies-Bouldin Index
+    eval_metrics = clustering_model.evaluate(X_scaled)
 
-    # Tong hop bang so lieu thong ke dac trung theo tung cum
-    persona_summary = cluster_engine.summarize_personas(df_engineered, cluster_labels)
-    # Duong dan luu tep CSV bao cao thong ke cum
-    persona_csv_path = os.path.join(REPORTS_DIR, 'cluster_personas_summary.csv')
-    # Xuat bang thong ke cum ra tep CSV an toan
-    save_dataframe_safely(persona_summary, persona_csv_path)
+    # Chieu ma tran dac trung xuong 2 chieu PCA de truc quan hoa
+    pca_coords = clustering_model.fit_transform_pca(X_scaled)
+    # Duong dan luu tap tin anh bieu do phan cum tren khong gian PCA
+    pca_img_path = os.path.join(FIGURES_DIR, 'pca_customer_clusters.png')
+    # Ve va xuat bieu do phan cum 2D
+    plot_pca_clusters(pca_coords, cluster_labels, pca_img_path)
+
+    # Tong hop bang chi so dinh luong cua 4 cum de xay dung persona
+    personas_summary_df = clustering_model.summarize_personas(df_engineered, cluster_labels)
+    # Duong dan luu bao cao thong ke persona
+    personas_csv_path = os.path.join(REPORTS_DIR, 'cluster_personas_summary.csv')
+    # Luu bang thong ke persona ra CSV an toan
+    save_dataframe_safely(personas_summary_df, personas_csv_path)
 
     # -------------------------------------------------------------
-    # BUOC 6: TINH TOAN CHI SO DIEM THUONG VA XUAT BAO CAO TUNG KHACH HANG
+    # BUOC 6: TINH DIEM THUONG DONG VA GOI Y UU DAI THEO HANH VI
     # -------------------------------------------------------------
-    # In thong bao buoc tinh toan chi so va xuat bao cao tung khach hang
+    # In thong bao buoc tinh diem thuong va goi y
     print('\n[BUOC 6] Tinh toan chi so diem thuong va tong hop bao cao cho tung khach hang...')
-    # Khoi tao bo tinh toan diem va phan tich hanh vi
-    scorer = CustomerBehaviorScorer(
-        base_multipliers=BASE_REWARD_MULTIPLIERS,
-        expense_bonuses=EXPENSE_BONUS_FACTORS,
-        risk_thresholds=RISK_THRESHOLDS
-    )
-    # Tinh toan chi so diem thuong dong cho toan bo tap khach hang
+    # Khoi tao bo tinh diem va goi y dua tren he so va nguong rui ro
+    scorer = CustomerBehaviorScorer(BASE_REWARD_MULTIPLIERS, EXPENSE_BONUS_FACTORS, RISK_THRESHOLDS)
+
+    # Tinh toan chuoi diem thuong dong cho toan bo khach hang
     df_engineered['Dynamic_Reward_Points'] = scorer.calculate_dynamic_reward_points(df_engineered)
-    # Huan luyen k-NN de xac dinh lang gieng hanh vi tuong dong trong tung cum
-    scorer.fit_knn_by_cluster(df_engineered, cluster_features)
+
+    # Huan luyen thuat toan k-NN tim lang gieng rieng biet tren tung cum
+    scorer.fit_knn_by_cluster(df_engineered, cluster_features, cluster_col='Cluster')
 
     # Tong hop bao cao phan tich chi tiet cho tung khach hang tren toan bo 50.000 dong
     customer_report_df = scorer.generate_customer_report(df_engineered)
@@ -170,12 +177,9 @@ def main():
     # BUOC 7: KIEM CHUNG MO HINH MACHINE LEARNING
     # -------------------------------------------------------------
     # In thong bao buoc kiem chung mo hinh
-    print('\n[BUOC 7] Kiem chung mo hinh Machine Learning (Linear Regression vs Decision Tree vs Random Forest)...')
+    print('\n[BUOC 7] Kiem chung mo hinh Machine Learning (Linear Regression vs Random Forest vs LightGBM)...')
     # Danh sach cac dac trung dau vao duoc dung de du bao diem thuong
-    feature_predictors = [
-        'Monthly_Spending', 'Annual_Income', 'Credit_Limit', 'Mobile_App_Login',
-        'Payment_Ratio', 'Discretionary_Spending', 'Essential_Spending'
-    ]
+    feature_predictors = ['Monthly_Spending', 'Annual_Income', 'Credit_Limit', 'Mobile_App_Login', 'Payment_Ratio', 'Discretionary_Spending', 'Essential_Spending']
     # Chuan hoa tap bien doc lap bang StandardScaler
     X_val = StandardScaler().fit_transform(df_engineered[feature_predictors].values)
     # Lay mang gia tri bien phu thuoc muc tieu
@@ -209,6 +213,5 @@ def main():
 
 # Diem bat dau thuc thi chuong trinh
 if __name__ == '__main__':
-    # Goi ham main de bat dau xu ly
+    # Goi ham main dieu phoi thuc thi
     main()
-

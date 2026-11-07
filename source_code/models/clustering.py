@@ -22,13 +22,7 @@ class CustomerClustering:
         # Luu gia tri hat giong de co dinh ket qua
         self.random_state = random_state
         # Khoi tao mo hinh KMeans su dung thuat toan k-means++ khoi tao tam cum
-        self.kmeans = KMeans(
-            n_clusters=self.n_clusters,
-            init='k-means++',
-            n_init=10,
-            max_iter=300,
-            random_state=self.random_state
-        )
+        self.kmeans = KMeans(n_clusters=self.n_clusters, init='k-means++', n_init=10, max_iter=300, random_state=self.random_state)
         # Khoi tao doi tuong PCA giam xuong 2 chieu de truc quan hoa
         self.pca = PCA(n_components=2, random_state=self.random_state)
         # Bien luu tru mang nhan cum cua toan bo tap du lieu
@@ -49,51 +43,89 @@ class CustomerClustering:
     def evaluate(self, X: np.ndarray, sample_size: int = 10000) -> Dict[str, float]:
         # In thong bao dang tinh toan chi so danh gia
         print("[CLUSTERING] Dang tinh toan Silhouette Score va Davies-Bouldin Index...")
-        # Lay mau ngau nhien co dinh 10.000 diem du lieu de tinh Silhouette Score
-        indices = np.random.RandomState(self.random_state).choice(len(X), size=min(len(X), sample_size), replace=False)
-        # Tinh toan chi so Silhouette Score
-        sil_score = float(silhouette_score(X[indices], self.labels_[indices]))
-        # Tinh toan chi so Davies-Bouldin Index
-        db_score = float(davies_bouldin_score(X, self.labels_))
+        # Kiem tra neu kich thuoc du lieu lon thi lay mau ngau nhien de toi uu thoi gian
+        if len(X) > sample_size:
+            # Khoi tao bo sinh so ngau nhien voi seed co dinh
+            rng = np.random.RandomState(self.random_state)
+            # Chon ngau nhien cac chi so mau
+            sample_idx = rng.choice(len(X), size=sample_size, replace=False)
+            # Lay tap du lieu con theo chi so mau
+            X_eval = X[sample_idx]
+            # Lay nhan cum tuong ung theo chi so mau
+            labels_eval = self.labels_[sample_idx]
+        # Truong hop du lieu nho hon sample_size thi su dung toan bo
+        else:
+            # Su dung toan bo ma tran dac trung
+            X_eval = X
+            # Su dung toan bo mang nhan cum
+            labels_eval = self.labels_
+        # Tinh toan he so Silhouette Score do do phan tach giua cac cum
+        sil_score = float(silhouette_score(X_eval, labels_eval))
+        # Tinh toan chi so Davies-Bouldin Index danh gia do dac va tach biet cum
+        db_index = float(davies_bouldin_score(X_eval, labels_eval))
         # In ket qua chi so danh gia ra man hinh
-        print(f"[CLUSTERING] -> Silhouette Score: {sil_score:.4f} | Davies-Bouldin Index: {db_score:.4f}")
-        # Tra ve tu dien chua 2 chi so do luong
-        return {'silhouette_score': sil_score, 'davies_bouldin_index': db_score}
+        print(f"[CLUSTERING] -> Silhouette Score: {sil_score:.4f} | Davies-Bouldin Index: {db_index:.4f}")
+        # Tra ve tu dien chua hai chi so do luong
+        return {"Silhouette_Score": round(sil_score, 4), "Davies_Bouldin_Index": round(db_index, 4)}
 
-    # Ham giam chieu du lieu xuong 2D bang PCA de truc quan hoa
+    # Ham giam chieu du lieu xuong 2 chieu bang PCA
     def fit_transform_pca(self, X: np.ndarray) -> np.ndarray:
-        # In thong bao thuc hien giam chieu PCA
+        # In thong bao bat dau giam chieu du lieu bang PCA
         print("[CLUSTERING] Chieu du lieu xuong khong gian PCA 2D...")
-        # Tinh toan va bien doi tap du lieu thanh 2 thanh phan chinh
+        # Thuc hien giam chieu khong gian du lieu xuong 2 thanh phan chinh
         pca_2d = self.pca.fit_transform(X)
-        # Tinh tong ty le phuong sai duoc giai thich boi 2 thanh phan chinh
-        explained_var = np.sum(self.pca.explained_variance_ratio_) * 100
-        # In ty le phuong sai giai thich duoc
-        print(f"[CLUSTERING] 2 thanh phan PCA giai thich duoc {explained_var:.2f}% phuong sai du lieu.")
-        # Tra ve ma tran toa do 2D
+        # Tinh tong ty le phuong sai duoc giai thich boi 2 thanh phan PCA
+        explained_variance = float(np.sum(self.pca.explained_variance_ratio_) * 100)
+        # In thong tin phuong sai ra man hinh console
+        print(f"[CLUSTERING] 2 thanh phan PCA giai thich duoc {explained_variance:.2f}% phuong sai du lieu.")
+        # Tra ve ma tran 2 chieu sau khi giam chieu
         return pca_2d
 
-    # Ham tong hop cac gia tri trung binh cua tung cum de xuat so lieu thong ke
+    # Ham tong hop gia tri trung binh cua cac dac trung theo tung cum de xay dung persona
     def summarize_personas(self, df: pd.DataFrame, cluster_labels: np.ndarray) -> pd.DataFrame:
-        # Tao ban sao DataFrame
-        temp_df = df.copy()
-        # Gan nhan cum vao DataFrame
-        temp_df['Cluster'] = cluster_labels
-        # Danh sach cac cot chi so can tinh trung binh thong ke
-        summary_cols = [
-            'Monthly_Spending', 'Annual_Income', 'Credit_Limit', 'Credit_Utilization',
-            'Credit_Score', 'Payment_Ratio', 'Redemption_Rate', 'Discretionary_Ratio',
-            'Essential_Ratio', 'Mobile_App_Login', 'Risk_Flag'
+        # Tao ban sao DataFrame de tranh anh huong den du lieu goc
+        df_copy = df.copy()
+        # Gan nhan cum vao cot moi co ten Cluster
+        df_copy["Cluster"] = cluster_labels
+        # Danh sach cac dac trung quan trong can tong hop theo cum
+        summary_features = [
+            # Cot tong chi tieu hang thang
+            "Monthly_Spending",
+            # Cot han muc tin dung duoc cap
+            "Credit_Limit",
+            # Cot ty le su dung han muc tin dung
+            "Credit_Utilization",
+            # Cot diem tin dung cua khach hang
+            "Credit_Score",
+            # Cot ty le thanh toan no hang thang
+            "Payment_Ratio",
+            # Cot ty trong chi tieu mua sam online
+            "Pct_Online",
+            # Cot ty trong chi tieu tap hoa
+            "Pct_Grocery",
+            # Cot ty trong chi tieu nhien lieu
+            "Pct_Fuel",
+            # Cot ty trong chi tieu an uong nha hang
+            "Pct_Dining",
+            # Cot ty trong chi tieu du lich
+            "Pct_Travel",
+            # Cot ty trong chi tieu giai tri
+            "Pct_Entertainment",
+            # Cot ty trong chi tieu hoa don sinh hoat
+            "Pct_Utility",
+            # Cot ty le doi diem thuong
+            "Redemption_Rate",
+            # Cot co canh bao rui ro tin dung
+            "Risk_Flag"
+        # Ket thuc khoi danh sach hoac tu dien
         ]
-        # Tinh gia tri trung binh cua cac dac trung theo tung cum
-        cluster_summary = temp_df.groupby('Cluster')[summary_cols].mean().reset_index()
-        # Dem so luong khach hang thuoc tung cum
-        counts = temp_df['Cluster'].value_counts().sort_index().values
-        # Tinh ty le phan tram so khach hang trong tung cum
-        percentages = (counts / len(temp_df)) * 100
-        # Gan cot so luong khach hang
-        cluster_summary['Count'] = counts
-        # Gan cot ty le phan tram (lam tron 2 chu so thap phan)
-        cluster_summary['Percentage'] = percentages.round(2)
-        # Tra ve bang thong ke tom tat cac cum
-        return cluster_summary
+        # Tinh gia tri trung binh cho tung dac trung nhom theo cum
+        summary = df_copy.groupby("Cluster")[summary_features].mean().round(2)
+        # Tinh so luong khach hang thuoc tung cum
+        summary["Customer_Count"] = df_copy.groupby("Cluster").size()
+        # Tinh ty le phan tram khach hang cua tung cum tren tong the
+        summary["Percentage"] = (summary["Customer_Count"] / len(df_copy) * 100).round(2)
+        # Dat ten cho chi muc cum
+        summary.index.name = "Cluster"
+        # Tra ve bang tong hop cac persona dinh luong
+        return summary

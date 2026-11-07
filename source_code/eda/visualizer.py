@@ -1,3 +1,5 @@
+# Import thu vien os de thao tac voi duong dan va tep tin
+import os
 # Import thu vien matplotlib de ve do thi khoa hoc
 import matplotlib.pyplot as plt
 # Import thu vien seaborn de truc quan hoa thong ke
@@ -9,6 +11,33 @@ import numpy as np
 
 # Cai dat phong cach mac dinh cho cac bieu do truc quan hoa
 plt.style.use('seaborn-v0_8-whitegrid' if 'seaborn-v0_8-whitegrid' in plt.style.available else 'default')
+
+# Ham luu bieu do an toan chong loi PermissionError khi nguoi dung dang mo xem anh
+def save_plot_safely(output_path: str, dpi: int = 300) -> str:
+    # Khoi thu luu tep anh goc
+    try:
+        # Luu hinh anh bieu do ra tap tin voi do phan giai cao
+        plt.savefig(output_path, dpi=dpi)
+        # Dong khung ve de giai phong tai nguyen bo nho
+        plt.close()
+        # In thong bao da xuat tap tin anh thanh cong
+        print(f"[EDA] Da luu bieu do tai: {output_path}")
+        # Tra ve duong dan goc
+        return output_path
+    # Bat loi PermissionError khi tep anh dang mo trong trinh xem anh
+    except PermissionError:
+        # Tach ten tap tin va duoi mo rong
+        base, ext = os.path.splitext(output_path)
+        # Tao duong dan thay the voi hau to _updated
+        alt_path = f"{base}_updated{ext}"
+        # Luu hinh anh sang duong dan du phong moi
+        plt.savefig(alt_path, dpi=dpi)
+        # Dong khung ve de giai phong bo nho
+        plt.close()
+        # In canh bao tap tin dang mo va thong bao duong dan moi
+        print(f"[CANH BAO] Tap tin {os.path.basename(output_path)} dang mo trong trinh xem anh. Da luu vao: {alt_path}")
+        # Tra ve duong dan moi
+        return alt_path
 
 # Ham ve va xuat bieu do ma tran nhiet he so tuong quan
 def plot_correlation_heatmap(df: pd.DataFrame, columns: list, output_path: str) -> None:
@@ -22,12 +51,8 @@ def plot_correlation_heatmap(df: pd.DataFrame, columns: list, output_path: str) 
     plt.title('Ma tran he so tuong quan giua cac dac trung chi tieu va tai chinh', fontsize=12, fontweight='bold')
     # Can chinh bo cuc khung ve
     plt.tight_layout()
-    # Luu hinh anh bieu do ra tap tin voi do phan giai 300 DPI
-    plt.savefig(output_path, dpi=300)
-    # Dong khung ve de giai phong bo nho
-    plt.close()
-    # In thong bao da xuat tap tin anh thanh cong
-    print(f"[EDA] Da luu bieu do Heatmap tai: {output_path}")
+    # Goi ham luu anh an toan chong khoa tep
+    save_plot_safely(output_path, dpi=300)
 
 # Ham ve bieu do hop the hien phan phoi chi tieu theo 7 danh muc
 def plot_category_spending_boxplot(df: pd.DataFrame, spending_cols: list, output_path: str) -> None:
@@ -47,12 +72,8 @@ def plot_category_spending_boxplot(df: pd.DataFrame, spending_cols: list, output
     plt.ylabel('So tien chi tieu hang thang', fontsize=11)
     # Can chinh bo cuc khung ve
     plt.tight_layout()
-    # Luu hinh anh ra tap tin voi do phan giai 300 DPI
-    plt.savefig(output_path, dpi=300)
-    # Dong khung ve
-    plt.close()
-    # In thong bao hoan thanh
-    print(f"[EDA] Da luu bieu do Boxplot tai: {output_path}")
+    # Goi ham luu anh an toan chong khoa tep
+    save_plot_safely(output_path, dpi=300)
 
 # Ham ve bieu do phan cum khach hang tren khong gian giam chieu PCA 2D
 def plot_pca_clusters(pca_2d: np.ndarray, labels: np.ndarray, output_path: str) -> None:
@@ -66,16 +87,8 @@ def plot_pca_clusters(pca_2d: np.ndarray, labels: np.ndarray, output_path: str) 
     for cluster_id in range(len(colors)):
         # Loc cac diem du lieu thuoc cum hien tai
         cluster_mask = (labels == cluster_id)
-        # Ve bieu do phan tan cho cac diem thuoc cum
-        plt.scatter(
-            pca_2d[cluster_mask, 0],
-            pca_2d[cluster_mask, 1],
-            c=colors[cluster_id],
-            label=cluster_names[cluster_id],
-            alpha=0.6,
-            edgecolors='w',
-            s=35
-        )
+        # Ve bieu do phan tan cho cac diem thuoc cum voi day du tham so truc quan
+        plt.scatter(pca_2d[cluster_mask, 0], pca_2d[cluster_mask, 1], c=colors[cluster_id], label=cluster_names[cluster_id], alpha=0.6, edgecolors='w', s=35)
     # Dat tieu de cho bieu do phan cum
     plt.title('Truc quan hoa cac cum khach hang tren khong gian PCA 2D', fontsize=12, fontweight='bold')
     # Dat nhan cho truc thanh phan chinh thu nhat
@@ -86,12 +99,8 @@ def plot_pca_clusters(pca_2d: np.ndarray, labels: np.ndarray, output_path: str) 
     plt.legend(title='Phan cum', loc='best', frameon=True)
     # Can chinh bo cuc khung ve
     plt.tight_layout()
-    # Luu hinh anh ra tap tin
-    plt.savefig(output_path, dpi=300)
-    # Dong khung ve
-    plt.close()
-    # In thong bao hoan thanh
-    print(f"[EDA] Da luu bieu do PCA Clusters tai: {output_path}")
+    # Goi ham luu anh an toan chong khoa tep
+    save_plot_safely(output_path, dpi=300)
 
 # Ham ve bieu do cot so sanh do chinh xac R2 giua cac mo hinh du bao
 def plot_model_benchmark(benchmark_df: pd.DataFrame, output_path: str) -> None:
@@ -113,9 +122,5 @@ def plot_model_benchmark(benchmark_df: pd.DataFrame, output_path: str) -> None:
         plt.text(bar.get_x() + bar.get_width()/2.0, yval + 0.02, f'{yval:.4f}', ha='center', va='bottom', fontweight='bold')
     # Can chinh bo cuc khung ve
     plt.tight_layout()
-    # Luu hinh anh bieu do
-    plt.savefig(output_path, dpi=300)
-    # Dong khung ve
-    plt.close()
-    # In thong bao hoan thanh
-    print(f"[EDA] Da luu bieu do Model Benchmark tai: {output_path}")
+    # Goi ham luu anh an toan chong khoa tep
+    save_plot_safely(output_path, dpi=300)

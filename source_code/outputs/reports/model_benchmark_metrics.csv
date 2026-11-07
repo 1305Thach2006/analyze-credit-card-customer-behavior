@@ -1,4 +1,4 @@
-﻿Model,R2_Score,RMSE,MAE
-Linear Regression,0.9285,188.46,104.01
-Decision Tree Regressor,0.9372,176.51,77.66
-Random Forest Regressor,0.9534,152.18,69.21
+Model,R2_Score,RMSE,MAE
+Linear Regression,0.92,161.65,86.72
+Random Forest Regressor,0.9287,152.6,70.01
+LightGBM Regressor,0.929,152.27,74.94
