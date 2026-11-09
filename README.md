@@ -49,15 +49,17 @@ D:\PTDL\
     │   └── validation_models.py # Đối chuẩn mô hình: Linear Regression vs Random Forest vs LightGBM
     │
     ├── outputs/                 # Kết quả đầu ra của mô hình
-    │   ├── figures/             # 4 biểu đồ trực quan hóa khoa học (.png 300 DPI)
+    │   ├── figures/             # 5 biểu đồ trực quan hóa khoa học (.png 300 DPI, chú thích tiếng Việt)
     │   │   ├── eda_correlation_heatmap.png        # Ma trận tương quan Pearson
     │   │   ├── category_spending_boxplot.png      # Phân phối chi tiêu theo 7 danh mục
+    │   │   ├── kmeans_k_optimization_curve.png    # Đánh giá tối ưu hóa số cụm k (2->6) qua Elbow, Silhouette, DBI
     │   │   ├── pca_customer_clusters.png          # Phân cụm khách hàng trên không gian PCA 2D
-    │   │   └── model_benchmark_comparison.png     # Biểu đồ cột so sánh hệ số R2 giữa các mô hình
-    │   └── reports/             # 3 báo cáo phân tích định lượng (.csv)
+    │   │   └── model_benchmark_comparison.png     # Biểu đồ cột so sánh hệ số R2 giữa 4 mô hình Machine Learning & Hybrid
+    │   └── reports/             # 4 báo cáo phân tích định lượng (.csv)
     │       ├── customer_level_analysis_report.csv # Báo cáo chi tiết toàn diện 50.000 khách hàng
     │       ├── cluster_personas_summary.csv       # Tổng hợp giá trị trung bình định lượng của các cụm
-    │       └── model_benchmark_metrics.csv        # Chỉ số đối chuẩn hiệu năng R2, RMSE, MAE của các mô hình
+    │       ├── k_selection_metrics.csv            # Chỉ số đánh giá WCSS, Silhouette, DBI theo k = 2 -> 6
+    │       └── model_benchmark_metrics.csv        # Chỉ số đối chuẩn hiệu năng R2, RMSE, MAE của 4 mô hình
     │
     └── main.py                  # Tệp điều phối thực thi toàn bộ quy trình phân tích tự động
 ```
@@ -89,13 +91,15 @@ python main.py
 ### A. Biểu đồ trực quan hóa (`outputs/figures/`):
 1. **`eda_correlation_heatmap.png`:** Ma trận tương quan nhiệt Pearson giữa các biến tài chính (Thu nhập, Chi tiêu, Hạn mức, Điểm tín dụng, Tỷ lệ trả nợ).
 2. **`category_spending_boxplot.png`:** Biểu đồ hộp thể hiện trung vị, tứ phân vị và các điểm ngoại lai (Outliers) chi tiêu trên 7 danh mục.
-3. **`pca_customer_clusters.png`:** Biểu đồ phân tán trực quan hóa các cụm khách hàng trên không gian 2 thành phần chính PCA.
-4. **`model_benchmark_comparison.png`:** Biểu đồ cột so sánh đối chuẩn hệ số xác định $R^2$ giữa các mô hình hồi quy.
+3. **`kmeans_k_optimization_curve.png`:** Biểu đồ 3 đồ thị con đánh giá tối ưu hóa số lượng phân cụm $k \in [2, 6]$ theo phương pháp Elbow (WCSS), Silhouette Score và Davies-Bouldin Index (DBI), đánh dấu điểm chọn tối ưu $k = 4$.
+4. **`pca_customer_clusters.png`:** Biểu đồ phân tán trực quan hóa các cụm khách hàng trên không gian 2 thành phần chính PCA.
+5. **`model_benchmark_comparison.png`:** Biểu đồ cột so sánh đối chuẩn hệ số xác định $R^2$ giữa 4 mô hình hồi quy (gồm mô hình cơ sở, 2 mô hình học máy tập hợp và mô hình lai Stacking Hybrid).
 
 ### B. Báo cáo dữ liệu định lượng (`outputs/reports/`):
 1. **`customer_level_analysis_report.csv`:** Báo cáo chi tiết toàn diện cho toàn bộ khách hàng gồm 15 chỉ số định lượng: `Customer_ID`, `Cluster`, `Card_Type`, `Monthly_Spending`, `Dominant_Expense_Category`, `Credit_Limit`, `Credit_Utilization`, `Credit_Score`, `Payment_Ratio`, `Dynamic_Reward_Points`, `Risk_Flag`, `Discretionary_Ratio`, `Essential_Ratio`, `Redemption_Rate`, `Risk_Status`.
 2. **`cluster_personas_summary.csv`:** Bảng tổng hợp các giá trị trung bình định lượng của các cụm khách hàng (quy mô cụm, chi tiêu trung bình, tỷ lệ sử dụng hạn mức, điểm tín dụng, tỷ trọng chi tiêu).
-3. **`model_benchmark_metrics.csv`:** Bảng đo lường hiệu năng đối chuẩn giữa các mô hình (`Linear Regression`, `Random Forest Regressor`, `LightGBM Regressor`) theo các thước đo $R^2$, RMSE, MAE.
+3. **`k_selection_metrics.csv`:** Bảng thực nghiệm đo lường 3 chỉ số Inertia (WCSS), Silhouette Score và Davies-Bouldin Index theo từng giá trị $k$ từ 2 đến 6.
+4. **`model_benchmark_metrics.csv`:** Bảng đo lường hiệu năng đối chuẩn giữa 4 mô hình (`Linear Regression`, `Random Forest Regressor`, `LightGBM Regressor`, `Stacking Hybrid Ensemble`) theo các thước đo $R^2$, RMSE, MAE.
 
 ---
 
@@ -125,3 +129,5 @@ Hệ thống xây dựng dựa trên sự kết hợp giữa các mô hình kế
    - *Lý do lựa chọn:* Đóng vai trò là mô hình cơ sở (Baseline Model) trong bài toán hồi quy điểm thưởng hành vi. Phù hợp để kiểm chứng mối tương quan tuyến tính chuẩn mực giữa các biến tài chính (Hạn mức, Chi tiêu, Thu nhập) trước khi đối chuẩn với các mô hình phi tuyến tính phức tạp hơn.
 2. **k-NN (k-Nearest Neighbors - $k = 5$):**
    - *Lý do lựa chọn:* Hoạt động theo nguyên lý Lọc cộng tác (Collaborative Filtering), cực kỳ phù hợp trong phân tích hành vi khách hàng bán lẻ. Thuật toán tìm kiếm 5 khách hàng láng giềng có thói quen quẹt thẻ tương đồng nhất trong cùng một cụm để hỗ trợ gợi ý các chính sách ưu đãi chéo dựa trên hành vi của nhóm đồng đẳng.
+3. **Stacking Hybrid Ensemble (Mô hình lai học máy tập hợp):**
+   - *Lý do lựa chọn:* Kế thừa kiến trúc Ensemble Stacking tiên tiến từ các nghiên cứu quốc tế trong ngành ngân hàng thương mại (Rajib Sarkar, 2026; Begum, 2025). Mô hình kết hợp sức mạnh của hai trường phái học máy tập hợp bổ trợ cho nhau: Random Forest (Bagging - triệt tiêu phương sai, kháng nhiễu) và LightGBM (Boosting - tối ưu hóa chuỗi phần dư sai số), thông qua mô hình trọng tài Linear Regression (Meta-Learner). Mô hình lai đạt hiệu năng tổng thể cao nhất toàn bộ hệ thống.

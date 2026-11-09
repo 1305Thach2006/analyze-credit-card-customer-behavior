@@ -1,217 +1,218 @@
-# Import thu vien os de thao tac voi thu muc va duong dan tep
+# Import thư viện os để thao tác với thư mục và đường dẫn tệp
 import os
-# Import thu vien sys de cau hinh duong dan module trong he thong
+# Import thư viện sys để cấu hình đường dẫn module và bảng mã ký tự hệ thống
 import sys
-# Import thu vien pandas de thao tac va quan ly bang du lieu
+
+# Cấu hình luồng xuất chuẩn tiêu chuẩn hỗ trợ tiếng Việt có dấu UTF-8 trên Windows
+if hasattr(sys.stdout, 'reconfigure'):
+    # Thiết lập lại bộ mã hóa đầu ra sang UTF-8
+    sys.stdout.reconfigure(encoding='utf-8')
+
+# Import thư viện pandas để thao tác trên DataFrame
 import pandas as pd
-# Import thu vien numpy de tinh toan ma tran va mang so hoc
+# Import thư viện numpy để thực hiện các phép toán ma trận
 import numpy as np
-# Import thu vien StandardScaler tu scikit-learn de chuan hoa du lieu
+# Import bộ chuẩn hóa StandardScaler để chuẩn hóa đặc trưng
 from sklearn.preprocessing import StandardScaler
 
-# Them thu muc hien tai vao duong dan tim kiem module cua Python
+# Thêm thư mục hiện tại vào đường dẫn tìm kiếm module của Python
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-# Import cac thiet lap duong dan tu config/settings.py
+# Import các thiết lập đường dẫn từ config/settings.py
 from config.settings import DATA_PATH, OUTPUT_DIR, FIGURES_DIR, REPORTS_DIR
-# Import cac tham so thuat toan va trong so tu config/settings.py
+# Import các tham số thuật toán và trọng số từ config/settings.py
 from config.settings import RANDOM_STATE, N_CLUSTERS, SPENDING_CATEGORIES, RATIO_CATEGORIES
-# Import cac he so thuong va nguong rui ro tu config/settings.py
+# Import các hệ số thưởng và ngưỡng rủi ro từ config/settings.py
 from config.settings import BASE_REWARD_MULTIPLIERS, EXPENSE_BONUS_FACTORS, RISK_THRESHOLDS
 
-# Import ham nap du lieu tu data_pipeline/loader.py
+# Import hàm nạp dữ liệu từ data_pipeline/loader.py
 from data_pipeline.loader import load_credit_card_data
-# Import ham tao dac trung nghiep vu tu data_pipeline/feature_engineering.py
+# Import hàm kỹ thuật chế tác đặc trưng từ data_pipeline/feature_engineering.py
 from data_pipeline.feature_engineering import engineer_credit_features
-# Import ham chuan hoa du lieu tu data_pipeline/preprocessor.py
+# Import hàm tiền xử lý và chuẩn hóa từ data_pipeline/preprocessor.py
 from data_pipeline.preprocessor import preprocess_features
 
-# Import cac ham ve bieu do tu eda/visualizer.py
-from eda.visualizer import plot_correlation_heatmap, plot_category_spending_boxplot, plot_pca_clusters, plot_model_benchmark
+# Import các hàm vẽ biểu đồ trực quan hóa từ eda/visualizer.py
+from eda.visualizer import plot_correlation_heatmap, plot_category_spending_boxplot, plot_pca_clusters, plot_kmeans_k_optimization, plot_model_benchmark
 
-# Import bo phan cum khach hang K-Means va PCA tu models/clustering.py
+# Import bộ phân cụm khách hàng K-Means và PCA từ models/clustering.py
 from models.clustering import CustomerClustering
-# Import dong co tinh diem thuong va goi y tu models/recommender.py
+# Import động cơ tính điểm thưởng và gợi ý từ models/recommender.py
 from models.recommender import CustomerBehaviorScorer
-# Import lop doi chuan cac mo hinh Machine Learning tu models/validation_models.py
+# Import lớp đối chuẩn các mô hình Machine Learning từ models/validation_models.py
 from models.validation_models import RewardValidationEngine
 
-# Ham luu DataFrame an toan tranh loi bi khoa tep khi mo tren Excel
+# Hàm lưu DataFrame an toàn tránh lỗi bị khóa tệp khi người dùng mở trên Excel
 def save_dataframe_safely(df: pd.DataFrame, file_path: str) -> str:
-    # Khoi lenh thu luu tep CSV theo duong dan goc
+    # Khối lệnh thử lưu tệp CSV theo đường dẫn gốc
     try:
-        # Ghi du lieu DataFrame ra tep CSV khong kem cot chi muc
+        # Ghi dữ liệu DataFrame ra tệp CSV không kèm cột chỉ mục
         df.to_csv(file_path, index=False)
-        # In thong bao luu tep thanh cong
-        print(f'[REPORT] Da luu thanh cong bao cao tai: {file_path}')
-        # Tra ve duong dan tep da luu
+        # In thông báo lưu tệp thành công
+        print(f'[REPORT] Đã lưu thành công báo cáo tại: {file_path}')
+        # Trả về đường dẫn tệp đã lưu
         return file_path
-    # Bat ngoai le PermissionError khi tep dang bi khoa boi chuong trinh khac
+    # Bắt ngoại lệ PermissionError khi tệp đang bị khóa bởi chương trình khác
     except PermissionError:
-        # Tach ten tep va phan mo rong
+        # Tách tên tệp và phần mở rộng
         base, ext = os.path.splitext(file_path)
-        # Tao duong dan tep thay the voi hau to _updated
+        # Tạo đường dẫn tệp thay thế với hậu tố _updated
         alt_path = f'{base}_updated{ext}'
-        # Ghi du lieu DataFrame sang tep thay the
+        # Ghi dữ liệu DataFrame sang tệp thay thế
         df.to_csv(alt_path, index=False)
-        # In canh bao nguoi dung ve viec tep bi khoa va luu sang duong dan moi
-        print(f'[CANH BAO] Tap tin {os.path.basename(file_path)} dang mo trong Excel. Da luu vao: {alt_path}')
-        # Tra ve duong dan tep moi
+        # In cảnh báo người dùng về việc tệp bị khóa và đã lưu sang đường dẫn mới
+        print(f'[CẢNH BÁO] Tập tin {os.path.basename(file_path)} đang mở trong Excel. Đã lưu vào: {alt_path}')
+        # Trả về đường dẫn tệp mới
         return alt_path
 
-# Ham dieu phoi toan bo luong phan tich du lieu va mo hinh hoa
+# Hàm điều phối toàn bộ quy trình phân tích dữ liệu và huấn luyện mô hình
 def main():
-    # In duong ke ngan cach tieu de
+    # In dòng phân cách tiêu đề chương trình
     print('=' * 80)
-    # In tieu de quy trinh phan tich
-    print('  MO HINH PHAN TICH HANH VI TIEU DUNG THE TIN DUNG VA DE XUAT CHIEN LUOC UU DAI CA NHAN')
-    # In duong ke ngan cach
+    # In tiêu đề đề tài nghiên cứu bằng tiếng Việt có dấu chuẩn
+    print('  MÔ HÌNH PHÂN TÍCH HÀNH VI TIÊU DÙNG THẺ TÍN DỤNG VÀ ĐỀ XUẤT CHIẾN LƯỢC ƯU ĐÃI CÁ NHÂN')
+    # In dòng phân cách tiêu đề
     print('=' * 80)
 
     # -------------------------------------------------------------
-    # BUOC 1: NAP DU LIEU (DATA INGESTION)
+    # BƯỚC 1: NẠP DỮ LIỆU (DATA INGESTION)
     # -------------------------------------------------------------
-    # Goi ham doc du lieu tu tep CSV goc
+    # Gọi hàm nạp dữ liệu từ file CSV gốc
     raw_df = load_credit_card_data(DATA_PATH)
 
     # -------------------------------------------------------------
-    # BUOC 2: CHE TAC DAC TRUNG (FEATURE ENGINEERING)
+    # BƯỚC 2: CHẾ TÁC ĐẶC TRƯNG (FEATURE ENGINEERING)
     # -------------------------------------------------------------
-    # Tao cac ty trong chi tieu va gan co rui ro
+    # Tạo các tỷ trọng chi tiêu và gắn cờ cảnh báo rủi ro
     df_engineered = engineer_credit_features(raw_df)
 
     # -------------------------------------------------------------
-    # BUOC 3: PHAN TICH THONG KE MO TA VA TRUC QUAN HOA (EDA)
+    # BƯỚC 3: TRỰC QUAN HÓA KHÁM PHÁ DỮ LIỆU (EDA)
     # -------------------------------------------------------------
-    # In thong bao buoc truc quan hoa
-    print('\n[BUOC 3] Thuc hien truc quan hoa du lieu EDA...')
-    # Danh sach cac cot duoc dua vao ma tran tuong quan
-    corr_cols = [
-        # Thu nhap hang nam
-        'Annual_Income',
-        # Tong chi tieu hang thang
-        'Monthly_Spending',
-        # Han muc tin dung
-        'Credit_Limit',
-        # Diem tin dung
-        'Credit_Score',
-        # Ty le thanh toan
-        'Payment_Ratio',
-        # Ty trong chi tieu tuy y
-        'Discretionary_Ratio',
-        # Ty trong chi tieu thiet yeu
-        'Essential_Ratio'
-    # Ket thuc khoi danh sach hoac tu dien
-    ]
-    # Duong dan tap tin anh heatmap tuong quan
-    heatmap_file = os.path.join(FIGURES_DIR, 'eda_correlation_heatmap.png')
-    # Ve va luu bieu do ma tran he so tuong quan
-    plot_correlation_heatmap(df_engineered, corr_cols, heatmap_file)
+    # In thông báo bước trực quan hóa khám phá dữ liệu
+    print('\n[BƯỚC 3] Thực hiện trực quan hóa dữ liệu khám phá (EDA)...')
+    # Danh sách 7 cột đặc trưng chi tiêu và tài chính để vẽ ma trận tương quan gốc
+    corr_features = ['Annual_Income', 'Monthly_Spending', 'Credit_Limit', 'Credit_Score', 'Payment_Ratio', 'Discretionary_Ratio', 'Essential_Ratio']
+    # Đường dẫn lưu tệp ảnh biểu đồ nhiệt tương quan
+    heatmap_path = os.path.join(FIGURES_DIR, 'eda_correlation_heatmap.png')
+    # Vẽ và lưu biểu đồ heatmap tương quan
+    plot_correlation_heatmap(df_engineered, corr_features, heatmap_path)
 
-    # Duong dan tap tin bieu do hop phan phoi chi tieu
-    boxplot_file = os.path.join(FIGURES_DIR, 'category_spending_boxplot.png')
-    # Ve va luu bieu do hop cho 7 danh muc chi tieu
-    plot_category_spending_boxplot(df_engineered, SPENDING_CATEGORIES, boxplot_file)
+    # Đường dẫn lưu tệp ảnh biểu đồ hộp phân phối chi tiêu
+    boxplot_path = os.path.join(FIGURES_DIR, 'category_spending_boxplot.png')
+    # Vẽ và lưu biểu đồ boxplot 7 danh mục chi tiêu
+    plot_category_spending_boxplot(df_engineered, SPENDING_CATEGORIES, boxplot_path)
 
     # -------------------------------------------------------------
-    # BUOC 4: TIEN XU LY VA CHUAN HOA DU LIEU (PREPROCESSING)
+    # BƯỚC 4: TIỀN XỬ LÝ VÀ CHUẨN HÓA DỮ LIỆU (PREPROCESSING)
     # -------------------------------------------------------------
-    # In thong bao buoc tien xu ly chuan hoa
-    print('\n[BUOC 4] Chuan hoa dac trung hanh vi bang StandardScaler...')
-    # Danh sach cac cot dac trung duoc lua chon de dua vao phan cum
+    # In thông báo bước chuẩn hóa dữ liệu
+    print('\n[BƯỚC 4] Chuẩn hóa đặc trưng hành vi bằng StandardScaler...')
+    # Danh sách các cột đặc trưng được lựa chọn để đưa vào phân cụm
     cluster_features = RATIO_CATEGORIES + ['Credit_Utilization', 'Payment_Ratio', 'Discretionary_Ratio', 'Redemption_Rate']
-    # Thuc hien chuan hoa du lieu bang Z-score thong qua StandardScaler
+    # Thực hiện chuẩn hóa dữ liệu bằng Z-score thông qua StandardScaler
     X_scaled, scaler, scaled_df = preprocess_features(df_engineered, cluster_features)
 
     # -------------------------------------------------------------
-    # BUOC 5: PHAN CUM K-MEANS VA CHIEU KHONG GIAN PCA 2D
+    # BƯỚC 5: TỐI ƯU HÓA SỐ CỤM K (2->6), PHÂN CỤM K-MEANS VÀ PCA 2D
     # -------------------------------------------------------------
-    # In thong bao buoc phan cum va giam chieu
-    print('\n[BUOC 5] Phan cum K-Means va chieu khong gian PCA 2D...')
-    # Khoi tao bo phan cum K-Means voi k=4
+    # In thông báo bước thực nghiệm quét k và phân cụm
+    print('\n[BƯỚC 5] Thực nghiệm quét số cụm k từ 2 đến 6, phân cụm K-Means và chiếu không gian PCA 2D...')
+    # Khởi tạo bộ phân cụm K-Means với k=4 mặc định
     clustering_model = CustomerClustering(n_clusters=N_CLUSTERS, random_state=RANDOM_STATE)
-    # Huan luyen va gan nhan cum cho 50.000 khach hang
+    # Thực hiện thực nghiệm quét k từ 2 đến 6 để tính Elbow, Silhouette và Davies-Bouldin
+    k_eval_df = clustering_model.evaluate_k_range(X_scaled, k_range=range(2, 7))
+    # Đường dẫn lưu báo cáo CSV chỉ số đánh giá theo k
+    k_eval_csv_path = os.path.join(REPORTS_DIR, 'k_selection_metrics.csv')
+    # Lưu bảng thống kê chỉ số theo k ra tệp CSV an toàn
+    save_dataframe_safely(k_eval_df, k_eval_csv_path)
+    # Đường dẫn lưu biểu đồ tối ưu hóa số cụm k
+    k_opt_img_path = os.path.join(FIGURES_DIR, 'kmeans_k_optimization_curve.png')
+    # Vẽ và lưu biểu đồ đánh giá tối ưu số cụm k với chú thích tiếng Việt có dấu
+    plot_kmeans_k_optimization(k_eval_df, k_opt_img_path)
+
+    # Huấn luyện và gán nhãn cụm cho 50.000 khách hàng với số cụm k=4 tối ưu
     cluster_labels = clustering_model.fit_predict(X_scaled)
-    # Gan cot nhan cum vao bang du lieu da qua xu ly dac trung
+    # Gán cột nhãn cụm vào bảng dữ liệu đã qua xử lý đặc trưng
     df_engineered['Cluster'] = cluster_labels
 
-    # Danh gia chat luong phan cum qua Silhouette Score va Davies-Bouldin Index
+    # Đánh giá chất lượng phân cụm qua Silhouette Score và Davies-Bouldin Index tại k=4
     eval_metrics = clustering_model.evaluate(X_scaled)
 
-    # Chieu ma tran dac trung xuong 2 chieu PCA de truc quan hoa
+    # Chiếu ma trận đặc trưng xuống 2 chiều PCA để trực quan hóa
     pca_coords = clustering_model.fit_transform_pca(X_scaled)
-    # Duong dan luu tap tin anh bieu do phan cum tren khong gian PCA
+    # Đường dẫn lưu tập tin ảnh biểu đồ phân cụm trên không gian PCA
     pca_img_path = os.path.join(FIGURES_DIR, 'pca_customer_clusters.png')
-    # Ve va xuat bieu do phan cum 2D
+    # Vẽ và xuất biểu đồ phân cụm 2D với chú thích tiếng Việt có dấu
     plot_pca_clusters(pca_coords, cluster_labels, pca_img_path)
 
-    # Tong hop bang chi so dinh luong cua 4 cum de xay dung persona
+    # Tổng hợp bảng chỉ số định lượng của 4 cụm để xây dựng chân dung persona
     personas_summary_df = clustering_model.summarize_personas(df_engineered, cluster_labels)
-    # Duong dan luu bao cao thong ke persona
+    # Đường dẫn lưu báo cáo thống kê persona
     personas_csv_path = os.path.join(REPORTS_DIR, 'cluster_personas_summary.csv')
-    # Luu bang thong ke persona ra CSV an toan
+    # Lưu bảng thống kê persona ra CSV an toàn
     save_dataframe_safely(personas_summary_df, personas_csv_path)
 
     # -------------------------------------------------------------
-    # BUOC 6: TINH DIEM THUONG DONG VA GOI Y UU DAI THEO HANH VI
+    # BƯỚC 6: TÍNH ĐIỂM THƯỞNG ĐỘNG VÀ GỢI Ý ƯU ĐÃI THEO HÀNH VI
     # -------------------------------------------------------------
-    # In thong bao buoc tinh diem thuong va goi y
-    print('\n[BUOC 6] Tinh toan chi so diem thuong va tong hop bao cao cho tung khach hang...')
-    # Khoi tao bo tinh diem va goi y dua tren he so va nguong rui ro
+    # In thông báo bước tính điểm thưởng và gợi ý
+    print('\n[BƯỚC 6] Tính toán chỉ số điểm thưởng và tổng hợp báo cáo cho từng khách hàng...')
+    # Khởi tạo bộ tính điểm và gợi ý dựa trên hệ số và ngưỡng rủi ro
     scorer = CustomerBehaviorScorer(BASE_REWARD_MULTIPLIERS, EXPENSE_BONUS_FACTORS, RISK_THRESHOLDS)
 
-    # Tinh toan chuoi diem thuong dong cho toan bo khach hang
+    # Tính toán chuỗi điểm thưởng động cho toàn bộ khách hàng
     df_engineered['Dynamic_Reward_Points'] = scorer.calculate_dynamic_reward_points(df_engineered)
 
-    # Huan luyen thuat toan k-NN tim lang gieng rieng biet tren tung cum
+    # Huấn luyện thuật toán k-NN tìm láng giềng riêng biệt trên từng cụm
     scorer.fit_knn_by_cluster(df_engineered, cluster_features, cluster_col='Cluster')
 
-    # Tong hop bao cao phan tich chi tiet cho tung khach hang tren toan bo 50.000 dong
+    # Tổng hợp báo cáo phân tích chi tiết cho từng khách hàng trên toàn bộ 50.000 dòng
     customer_report_df = scorer.generate_customer_report(df_engineered)
-    # Duong dan luu tep CSV bao cao chi tiet tung khach hang
+    # Đường dẫn lưu tệp CSV báo cáo chi tiết từng khách hàng
     customer_report_path = os.path.join(REPORTS_DIR, 'customer_level_analysis_report.csv')
-    # Xuat toan bo bao cao tung khach hang ra tep CSV (luu truc tiep khong in chi tiet ra man hinh)
+    # Xuất toàn bộ báo cáo từng khách hàng ra tệp CSV
     save_dataframe_safely(customer_report_df, customer_report_path)
 
     # -------------------------------------------------------------
-    # BUOC 7: KIEM CHUNG MO HINH MACHINE LEARNING
+    # BƯỚC 7: KIỂM CHỨNG MÔ HÌNH MACHINE LEARNING VÀ MÔ HÌNH LAI STACKING
     # -------------------------------------------------------------
-    # In thong bao buoc kiem chung mo hinh
-    print('\n[BUOC 7] Kiem chung mo hinh Machine Learning (Linear Regression vs Random Forest vs LightGBM)...')
-    # Danh sach cac dac trung dau vao duoc dung de du bao diem thuong
+    # In thông báo bước kiểm chứng mô hình
+    print('\n[BƯỚC 7] Kiểm chứng mô hình Machine Learning (Linear Regression vs Random Forest vs LightGBM vs Stacking Hybrid)...')
+    # Danh sách các đặc trưng đầu vào được dùng để dự báo điểm thưởng
     feature_predictors = ['Monthly_Spending', 'Annual_Income', 'Credit_Limit', 'Mobile_App_Login', 'Payment_Ratio', 'Discretionary_Spending', 'Essential_Spending']
-    # Chuan hoa tap bien doc lap bang StandardScaler
+    # Chuẩn hóa tập biến độc lập bằng StandardScaler(Z)
     X_val = StandardScaler().fit_transform(df_engineered[feature_predictors].values)
-    # Lay mang gia tri bien phu thuoc muc tieu
+    # Lấy mảng giá trị biến phụ thuộc mục tiêu
     y_val = df_engineered['Dynamic_Reward_Points'].values
 
-    # Khoi tao dong co kiem chung mo hinh Machine Learning
+    # Khởi tạo động cơ kiểm chứng mô hình Machine Learning và mô hình Lai
     val_engine = RewardValidationEngine(random_state=RANDOM_STATE)
-    # Chay doi chuan hieu nang tren 3 mo hinh
+    # Chạy đối chuẩn hiệu năng trên 4 mô hình
     benchmark_df = val_engine.run_benchmark(X_val, y_val)
 
-    # Duong dan luu bao cao doi chuan dang CSV
+    # Đường dẫn lưu báo cáo đối chuẩn dạng CSV
     benchmark_csv_path = os.path.join(REPORTS_DIR, 'model_benchmark_metrics.csv')
-    # Xuat bang ket qua doi chuan ra CSV an toan
+    # Xuất bảng kết quả đối chuẩn ra CSV an toàn
     save_dataframe_safely(benchmark_df, benchmark_csv_path)
 
-    # Duong dan luu bieu do so sanh hieu nang
+    # Đường dẫn lưu biểu đồ so sánh hiệu năng 4 mô hình
     benchmark_img_path = os.path.join(FIGURES_DIR, 'model_benchmark_comparison.png')
-    # Ve va luu bieu do cot so sanh R2
+    # Vẽ và lưu biểu đồ cột so sánh R2 với chú thích tiếng Việt có dấu
     plot_model_benchmark(benchmark_df, benchmark_img_path)
 
-    # In thong bao hoan tat toan bo quy trinh
+    # In thông báo hoàn tất toàn bộ quy trình
     print('\n' + '=' * 80)
-    # In dong tong ket
-    print('  QUY TRINH PHAN TICH DU LIEU VA MO HINH HOA DA HOAN TAT XUAT SAC!')
-    # In thu muc luu tru bieu do
-    print(f'  - Bieu do truc quan hoa da duoc luu tai: {FIGURES_DIR}')
-    # In thu muc luu tru bao cao du lieu
-    print(f'  - Toan bo bao cao CSV da duoc luu tai  : {REPORTS_DIR}')
-    # In duong ke ket thuc
+    # In dòng tổng kết
+    print('  QUY TRÌNH PHÂN TÍCH DỮ LIỆU VÀ MÔ HÌNH HÓA ĐÃ HOÀN TẤT XUẤT SẮC!')
+    # In thư mục lưu trữ biểu đồ
+    print(f'  - Biểu đồ trực quan hóa đã được lưu tại: {FIGURES_DIR}')
+    # In thư mục lưu trữ báo cáo dữ liệu
+    print(f'  - Toàn bộ báo cáo CSV đã được lưu tại  : {REPORTS_DIR}')
+    # In đường kẻ kết thúc
     print('=' * 80)
 
-# Diem bat dau thuc thi chuong trinh
+# Điểm bắt đầu thực thi chương trình
 if __name__ == '__main__':
-    # Goi ham main dieu phoi thuc thi
+    # Gọi hàm main điều phối thực thi
     main()

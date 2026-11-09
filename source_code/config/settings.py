@@ -1,103 +1,103 @@
-# Import thu vien os de thao tac voi duong dan he thong
+# Import thư viện os để thao tác với đường dẫn hệ thống
 import os
 
-# Duong dan tuyet doi den tep du lieu goc
+# Đường dẫn tuyệt đối đến tệp dữ liệu gốc
 DATA_PATH = r"D:\PTDL\dataset\synthetic_credit_card_customer_behavior_dataset.csv"
 
-# Thu muc goc chua cac ket qua dau ra
+# Thư mục gốc chứa các kết quả đầu ra
 OUTPUT_DIR = r"D:\PTDL\source_code\outputs"
 
-# Thu muc luu tru cac bieu do truc quan hoa duoi dang hinh anh
+# Thư mục lưu trữ các biểu đồ trực quan hóa dưới dạng hình ảnh
 FIGURES_DIR = os.path.join(OUTPUT_DIR, "figures")
 
-# Thu muc luu tru cac bao cao thong ke duoi dang tap tin csv
+# Thư mục lưu trữ các báo cáo thống kê dưới dạng tập tin CSV
 REPORTS_DIR = os.path.join(OUTPUT_DIR, "reports")
 
-# Gia tri hat giong ngau nhien de co dinh ket qua thuc thi
+# Giá trị hạt giống ngẫu nhiên để cố định kết quả thực thi
 RANDOM_STATE = 42
 
-# So luong cum lua chon cho thuat toan phan cum K-Means
+# Số lượng cụm lựa chọn cho thuật toán phân cụm K-Means
 N_CLUSTERS = 4
 
-# Danh sach cac cot chi tieu chi tiet theo 7 danh muc trong du lieu goc
+# Danh sách các cột chi tiêu chi tiết theo 7 danh mục trong dữ liệu gốc
 SPENDING_CATEGORIES = [
-    # Cot chi tieu mua sam truc tuyen
+    # Cột chi tiêu mua sắm trực tuyến
     "Online_Shopping_Spending",
-    # Cot chi tieu tap hoa va thuc pham
+    # Cột chi tiêu tạp hóa và thực phẩm
     "Grocery_Spending",
-    # Cot chi tieu nhien lieu xang dau
+    # Cột chi tiêu nhiên liệu xăng dầu
     "Fuel_Spending",
-    # Cot chi tieu an uong nha hang
+    # Cột chi tiêu ăn uống nhà hàng
     "Dining_Spending",
-    # Cot chi tieu du lich khach san
+    # Cột chi tiêu du lịch khách sạn
     "Travel_Spending",
-    # Cot chi tieu giai tri xem phim
+    # Cột chi tiêu giải trí xem phim
     "Entertainment_Spending",
-    # Cot chi tieu hoa don dien nuoc sinh hoat
+    # Cột chi tiêu hóa đơn điện nước sinh hoạt
     "Utility_Bill_Spending"
-# Ket thuc khoi danh sach hoac tu dien
+# Kết thúc danh sách danh mục chi tiêu gốc
 ]
 
-# Danh sach cac dac trung ty trong chi tieu duoc tao moi
+# Danh sách các đặc trưng tỷ trọng chi tiêu được tạo mới
 RATIO_CATEGORIES = [
-    # Ty trong chi tieu mua sam truc tuyen
+    # Tỷ trọng chi tiêu mua sắm trực tuyến
     "Pct_Online",
-    # Ty trong chi tieu tap hoa
+    # Tỷ trọng chi tiêu tạp hóa thực phẩm
     "Pct_Grocery",
-    # Ty trong chi tieu nhien lieu
+    # Tỷ trọng chi tiêu nhiên liệu xăng dầu
     "Pct_Fuel",
-    # Ty trong chi tieu an uong nha hang
+    # Tỷ trọng chi tiêu ăn uống nhà hàng
     "Pct_Dining",
-    # Ty trong chi tieu du lich
+    # Tỷ trọng chi tiêu du lịch khách sạn
     "Pct_Travel",
-    # Ty trong chi tieu giai tri
+    # Tỷ trọng chi tiêu giải trí
     "Pct_Entertainment",
-    # Ty trong chi tieu hoa don sinh hoat
+    # Tỷ trọng chi tiêu hóa đơn sinh hoạt
     "Pct_Utility"
-# Ket thuc khoi danh sach hoac tu dien
+# Kết thúc danh sách đặc trưng tỷ trọng chi tiêu
 ]
 
-# He so tinh diem thuong co ban theo tung hang the tin dung
+# Hệ số tính điểm thưởng cơ bản theo từng hạng thẻ tín dụng
 BASE_REWARD_MULTIPLIERS = {
-    # Hang the Signature cao cap nhat nhan he so gap doi
+    # Hạng thẻ Signature cao cấp nhất nhân hệ số gấp đôi
     "Signature": 2.0,
-    # Hang the Platinum nhan he so cao
+    # Hạng thẻ Platinum nhận hệ số cao
     "Platinum": 1.5,
-    # Hang the Gold nhan he so tieu chuan
+    # Hạng thẻ Gold nhận hệ số tiêu chuẩn
     "Gold": 1.0,
-    # Hang the Silver nhan he so co ban
+    # Hạng thẻ Silver nhận hệ số cơ bản
     "Silver": 0.5,
-    # Hang the Basic pho thong nhan he so co ban
+    # Hạng thẻ Basic phổ thông nhận hệ số cơ bản
     "Basic": 0.5
-# Ket thuc khoi danh sach hoac tu dien
+# Kết thúc bảng hệ số hạng thẻ
 }
 
-# He so thuong them theo danh muc chi tieu co gia tri lon nhat
+# Hệ số thưởng thêm theo danh mục chi tiêu có giá trị lớn nhất
 EXPENSE_BONUS_FACTORS = {
-    # Uu dai dac biet cho chi tieu du lich
+    # Ưu đãi đặc biệt cho chi tiêu du lịch
     "Travel_Spending": 3.0,
-    # Uu dai dac biet cho chi tieu nha hang an uong
+    # Ưu đãi đặc biệt cho chi tiêu nhà hàng ăn uống
     "Dining_Spending": 3.0,
-    # Uu dai cho chi tieu mua sam truc tuyen
+    # Ưu đãi cho chi tiêu mua sắm trực tuyến
     "Online_Shopping_Spending": 2.0,
-    # Uu dai cho chi tieu hoat dong giai tri
+    # Ưu đãi cho chi tiêu hoạt động giải trí
     "Entertainment_Spending": 1.5,
-    # Uu dai co ban cho chi tieu tap hoa
+    # Ưu đãi cơ bản cho chi tiêu tạp hóa
     "Grocery_Spending": 0.5,
-    # Uu dai co ban cho hoa don dien nuoc
+    # Ưu đãi cơ bản cho hóa đơn điện nước
     "Utility_Bill_Spending": 0.5,
-    # Uu dai co ban cho chi tieu do xang
+    # Ưu đãi cơ bản cho chi tiêu đổ xăng
     "Fuel_Spending": 0.5
-# Ket thuc khoi danh sach hoac tu dien
+# Kết thúc bảng hệ số danh mục chi tiêu
 }
 
-# Cac nguong chi so tai chinh de xac dinh rui ro tin dung
+# Các ngưỡng chỉ số tài chính để xác định rủi ro tín dụng
 RISK_THRESHOLDS = {
-    # Nguong tran ty le su dung han muc tin dung cho phep
+    # Ngưỡng trần tỷ lệ sử dụng hạn mức tín dụng cho phép
     "max_credit_utilization": 0.75,
-    # Nguong san diem tin dung toi thieu an toan
+    # Ngưỡng sàn điểm tín dụng tối thiểu an toàn
     "min_credit_score": 550,
-    # Nguong san ty le thanh toan no toi thieu an toan
+    # Ngưỡng sàn tỷ lệ thanh toán nợ tối thiểu an toàn
     "min_payment_ratio": 0.40
-# Ket thuc khoi danh sach hoac tu dien
+# Kết thúc bảng ngưỡng rủi ro tín dụng
 }

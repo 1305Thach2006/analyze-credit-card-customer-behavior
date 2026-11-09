@@ -1,78 +1,104 @@
-# Import mo hinh Hoi quy tuyen tinh LinearRegression tu scikit-learn
+# Import mô hình Hồi quy tuyến tính LinearRegression từ scikit-learn
 from sklearn.linear_model import LinearRegression
-# Import mo hinh Random Forest Regressor tap hop cay quyet dinh
+# Import mô hình Random Forest Regressor tập hợp cây quyết định
 from sklearn.ensemble import RandomForestRegressor
-# Import mo hinh Gradient Boosting toi uu LightGBM Regressor
+# Import mô hình học máy tập hợp xếp chồng StackingRegressor
+from sklearn.ensemble import StackingRegressor
+# Import mô hình Gradient Boosting tối ưu LightGBM Regressor
 from lightgbm import LGBMRegressor
-# Import cac chi so danh gia do chinh xac hoi quy: R2, RMSE, MAE
+# Import các chỉ số đánh giá độ chính xác hồi quy: R2, RMSE, MAE
 from sklearn.metrics import r2_score, root_mean_squared_error, mean_absolute_error
-# Import ham chia tach du lieu train_test_split tu scikit-learn
+# Import hàm chia tách dữ liệu train_test_split từ scikit-learn
 from sklearn.model_selection import train_test_split
-# Import thu vien pandas de tao bang so sanh doi chuan
+# Import thư viện pandas để tạo bảng so sánh đối chuẩn
 import pandas as pd
-# Import thu vien numpy de tinh toan ma tran va mang so hoc
+# Import thư viện numpy để tính toán ma trận và mảng số học
 import numpy as np
-# Import thu vien typing de chu thich kieu tra ve
+# Import thư viện typing để chú thích kiểu trả về
 from typing import Dict, Any, Tuple
 
-# Lop quan ly kiem chung he thong tinh diem thuong bang cac thuat toan Machine Learning thuan tuy
+# Lớp quản lý kiểm chứng và đối chuẩn hệ thống bằng các thuật toán Machine Learning và mô hình Lai
 class RewardValidationEngine:
-    # Ham khoi tao lop kiem chung voi hat giong ngau nhien
+    # Hàm khởi tạo lớp kiểm chứng với hạt giống ngẫu nhiên
     def __init__(self, random_state: int = 42):
-        # Luu gia tri random_state de co dinh ket qua
+        # Lưu giá trị random_state để cố định kết quả
         self.random_state = random_state
-        # Khoi tao tu dien chua 3 mo hinh Machine Learning co dien va tang tien de so sanh doi chuan
+        # Khởi tạo mô hình Random Forest cơ sở cho bộ ensemble
+        rf_base = RandomForestRegressor(n_estimators=50, max_depth=12, random_state=self.random_state, n_jobs=-1)
+        # Khởi tạo mô hình LightGBM cơ sở cho bộ ensemble
+        lgbm_base = LGBMRegressor(n_estimators=100, learning_rate=0.05, random_state=self.random_state, verbose=-1, n_jobs=-1)
+        # Khởi tạo mô hình lai Stacking Hybrid Ensemble kết hợp Bagging và Boosting qua Meta-Learner
+        stacking_hybrid = StackingRegressor(
+            # Danh sách 2 mô hình học máy nền tảng mạnh nhất
+            estimators=[
+                # Mô hình Random Forest đại diện trường phái Bagging
+                ('Random Forest', rf_base),
+                # Mô hình LightGBM đại diện trường phái Boosting
+                ('LightGBM', lgbm_base)
+            # Kết thúc danh sách bộ ước lượng cơ sở
+            ],
+            # Mô hình Hồi quy tuyến tính đóng vai trò trọng tài tối ưu hóa trọng số phần dư
+            final_estimator=LinearRegression(),
+            # Thực hiện kiểm định chéo 3-fold để sinh dự đoán out-of-fold cho Meta-Learner
+            cv=3,
+            # Chạy đa luồng song song để tối ưu thời gian tính toán
+            n_jobs=-1
+        # Kết thúc khởi tạo StackingRegressor
+        )
+        # Khởi tạo từ điển chứa 4 mô hình Machine Learning và mô hình Lai để so sánh đối chuẩn
         self.models = {
-            # Mo hinh Hoi quy tuyen tinh dong vai tro mo hinh co so
+            # Mô hình Hồi quy tuyến tính đóng vai trò mô hình cơ sở
             'Linear Regression': LinearRegression(),
-            # Mo hinh Random Forest tap hop cay song song triet tieu phuong sai
-            'Random Forest Regressor': RandomForestRegressor(n_estimators=50, max_depth=12, random_state=self.random_state, n_jobs=-1),
-            # Mo hinh LightGBM Gradient Boosting toi uu chuoi phan du
-            'LightGBM Regressor': LGBMRegressor(n_estimators=100, learning_rate=0.05, random_state=self.random_state, verbose=-1, n_jobs=-1)
-        # Ket thuc khoi danh sach hoac tu dien
+            # Mô hình Random Forest tập hợp cây song song triệt tiêu phương sai
+            'Random Forest Regressor': rf_base,
+            # Mô hình LightGBM Gradient Boosting tối ưu chuỗi phần dư
+            'LightGBM Regressor': lgbm_base,
+            # Mô hình lai Stacking Hybrid Ensemble kết hợp Bagging và Boosting
+            'Stacking Hybrid Ensemble': stacking_hybrid
+        # Kết thúc từ điển danh sách mô hình
         }
-        # Bang luu ket qua danh gia doi chuan
+        # Bảng lưu kết quả đánh giá đối chuẩn
         self.benchmark_results = None
 
-    # Ham thuc hien huan luyen va danh gia doi chuan 3 mo hinh Machine Learning
+    # Hàm thực hiện huấn luyện và đánh giá đối chuẩn 4 mô hình Machine Learning
     def run_benchmark(self, X: np.ndarray, y: np.ndarray) -> pd.DataFrame:
-        # In thong bao bat dau qua trinh doi chuan mo hinh
-        print('[VALIDATION] Bat dau kiem chung he thong bang Linear Regression vs Random Forest vs LightGBM...')
-        # Chia tap du lieu thanh tap Huan luyen Train (80%) va tap Kiem thu Test (20%)
+        # In thông báo bắt đầu quá trình đối chuẩn mô hình
+        print('[VALIDATION] Bắt đầu kiểm chứng hệ thống bằng Linear Regression vs Random Forest vs LightGBM vs Stacking Hybrid...')
+        # Chia tập dữ liệu thành tập Huấn luyện Train (80%) và tập Kiểm thử Test (20%)
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.20, random_state=self.random_state)
-        # Danh sach luu ket qua do luong cua tung mo hinh
+        # Danh sách lưu kết quả đo lường của từng mô hình
         results_list = []
-        # Lap qua tung mo hinh trong danh sach
+        # Lặp qua từng mô hình trong danh sách
         for model_name, model in self.models.items():
-            # In thong bao dang huan luyen mo hinh hien tai
-            print(f'[VALIDATION] Dang huan luyen mo hinh: {model_name}...')
-            # Huan luyen mo hinh tren tap Train (80% du lieu)
+            # In thông báo đang huấn luyện mô hình hiện tại
+            print(f'[VALIDATION] Đang huấn luyện mô hình: {model_name}...')
+            # Huấn luyện mô hình trên tập Train (80% dữ liệu)
             model.fit(X_train, y_train)
-            # Thuc hien du doan tren tap Test doc lap (20% du lieu)
+            # Thực hiện dự đoán trên tập Test độc lập (20% dữ liệu)
             y_pred = model.predict(X_test)
-            # Tinh he so xac dinh R2 Score (cang gan 1.0 mo hinh cang chinh xac)
+            # Tính hệ số xác định R2 Score (càng gần 1.0 mô hình càng chính xác)
             r2 = float(r2_score(y_test, y_pred))
-            # Tinh sai so can quan phuong trung binh RMSE
+            # Tính sai số căn quân phương trung bình RMSE
             rmse = float(root_mean_squared_error(y_test, y_pred))
-            # Tinh sai so tuyet doi trung binh MAE
+            # Tính sai số tuyệt đối trung bình MAE
             mae = float(mean_absolute_error(y_test, y_pred))
-            # In ket qua do luong cua mo hinh ra man hinh console
-            print(f'[VALIDATION] -> {model_name}: R2 = {r2:.4f} | RMSE = {rmse:.2f} | MAE = {mae:.2f}')
-            # Luu thong so danh gia vao danh sach ket qua
+            # In kết quả đo lường của mô hình ra màn hình console
+            print(f'[VALIDATION] -> {model_name}: R2 = {r2:.2f} | RMSE = {rmse:.2f} | MAE = {mae:.2f}')
+            # Lưu thông số đánh giá vào danh sách kết quả
             results_list.append({
-                # Ten mo hinh dang danh gia
+                # Tên mô hình đang đánh giá
                 'Model': model_name,
-                # He so xac dinh R2 Score
-                'R2_Score': round(r2, 4),
-                # Sai so can quan phuong trung binh RMSE
+                # Hệ số xác định R2 Score
+                'R2_Score': round(r2, 2),
+                # Sai số căn quân phương trung bình RMSE
                 'RMSE': round(rmse, 2),
-                # Sai so tuyet doi trung binh MAE
+                # Sai số tuyệt đối trung bình MAE
                 'MAE': round(mae, 2)
-            # Ket thuc khoi danh sach hoac tu dien
+            # Kết thúc phần tử kết quả đánh giá
             })
-        # Chuyen danh sach ket qua thanh DataFrame cua pandas
+        # Chuyển danh sách kết quả thành DataFrame của pandas
         self.benchmark_results = pd.DataFrame(results_list)
-        # In thong bao hoan tat qua trinh doi chuan
-        print('[VALIDATION] Hoan tat doi chuan mo hinh Machine Learning thanh cong!')
-        # Tra ve bang ket qua so sanh doi chuan
+        # In thông báo hoàn tất quá trình đối chuẩn
+        print('[VALIDATION] Hoàn tất đối chuẩn mô hình Machine Learning thành công!')
+        # Trả về bảng kết quả so sánh đối chuẩn
         return self.benchmark_results

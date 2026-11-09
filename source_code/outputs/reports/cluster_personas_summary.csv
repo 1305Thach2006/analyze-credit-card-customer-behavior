@@ -1,5 +1,5 @@
-Monthly_Spending,Credit_Limit,Credit_Utilization,Credit_Score,Payment_Ratio,Pct_Online,Pct_Grocery,Pct_Fuel,Pct_Dining,Pct_Travel,Pct_Entertainment,Pct_Utility,Redemption_Rate,Risk_Flag,Customer_Count,Percentage
-73985.08,714234.75,0.43,628.72,0.76,0.12,0.38,0.11,0.1,0.07,0.09,0.13,0.23,0.21,12145,24.29
-73854.31,709764.67,0.43,628.72,0.76,0.2,0.19,0.1,0.16,0.1,0.13,0.12,0.22,0.2,18353,36.71
-74799.87,717843.48,0.43,630.93,0.77,0.13,0.2,0.27,0.1,0.07,0.09,0.13,0.23,0.2,9443,18.89
-72895.72,696348.84,0.43,627.95,0.76,0.12,0.2,0.11,0.11,0.07,0.09,0.3,0.23,0.21,10059,20.12
+Customer_Count,Customer_Percentage,Monthly_Spending,Credit_Utilization,Credit_Score,Payment_Ratio,Pct_Online,Pct_Grocery,Pct_Fuel,Pct_Dining,Pct_Travel,Pct_Entertainment,Pct_Utility,Discretionary_Ratio,Essential_Ratio
+12145,24.29,73985.08,0.43,628.72,0.76,0.12,0.38,0.11,0.1,0.07,0.09,0.13,0.38,0.62
+18353,36.71,73854.31,0.43,628.72,0.76,0.2,0.19,0.1,0.16,0.1,0.13,0.12,0.59,0.41
+9443,18.89,74799.87,0.43,630.93,0.77,0.13,0.2,0.27,0.1,0.07,0.09,0.13,0.39,0.61
+10059,20.12,72895.72,0.43,627.95,0.76,0.12,0.2,0.11,0.11,0.07,0.09,0.3,0.39,0.61

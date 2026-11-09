@@ -1,27 +1,27 @@
-# Import thu vien StandardScaler tu scikit-learn de chuan hoa du lieu
+# Import thư viện StandardScaler từ scikit-learn để chuẩn hóa dữ liệu
 from sklearn.preprocessing import StandardScaler
-# Import thu vien pandas de thao tac tren DataFrame
+# Import thư viện pandas để thao tác trên DataFrame
 import pandas as pd
-# Import thu vien numpy de tinh toan ma tran
+# Import thư viện numpy để tính toán ma trận
 import numpy as np
-# Import thu vien typing de chu thich kieu du lieu tra ve
+# Import thư viện typing để chú thích kiểu dữ liệu trả về
 from typing import Tuple, List
 
-# Ham chuan hoa dac trung so hoc dua tren phuong phap Z-score
+# Hàm chuẩn hóa đặc trưng số học dựa trên phương pháp Z-score
 def preprocess_features(df: pd.DataFrame, feature_cols: List[str]) -> Tuple[np.ndarray, StandardScaler, pd.DataFrame]:
-    # In thong bao bat dau buoc chuan hoa dac trung
-    print(f"[PREPROCESSOR] Bat dau chuan hoa {len(feature_cols)} dac trung duoc lua chon...")
-    # Trich xuat cac cot dac trung can chuan hoa
+    # In thông báo bắt đầu bước chuẩn hóa đặc trưng
+    print(f"[PREPROCESSOR] Bắt đầu chuẩn hóa {len(feature_cols)} đặc trưng được lựa chọn...")
+    # Trích xuất các cột đặc trưng cần chuẩn hóa
     features_df = df[feature_cols].copy()
-    # Kiem tra va dien gia tri khuyet thieu bang gia tri trung vi cua cot
+    # Kiểm tra và điền giá trị khuyết thiếu bằng giá trị trung vị của cột
     features_df = features_df.fillna(features_df.median())
-    # Khoi tao doi tuong StandardScaler de tinh toan trung binh va do lech chuan
+    # Khởi tạo đối tượng StandardScaler để tính toán trung bình và độ lệch chuẩn
     scaler = StandardScaler()
-    # Tinh toan thong so va bien doi tap du lieu thanh phan phoi chuan hoa
+    # Tính toán thông số và biến đổi tập dữ liệu thành phân phối chuẩn hóa
     scaled_array = scaler.fit_transform(features_df)
-    # Tao DataFrame moi voi cac cot va chi muc tuong ung
+    # Tạo DataFrame mới với các cột và chỉ mục tương ứng
     scaled_df = pd.DataFrame(scaled_array, columns=feature_cols, index=df.index)
-    # In thong bao hoan thanh chuan hoa
-    print(f"[PREPROCESSOR] Chuan hoa thanh cong ma tran kich thuoc: {scaled_array.shape}")
-    # Tra ve mang numpy, doi tuong scaler va DataFrame da chuan hoa
+    # In thông báo hoàn thành chuẩn hóa
+    print(f"[PREPROCESSOR] Chuẩn hóa thành công ma trận kích thước: {scaled_array.shape}")
+    # Trả về mảng numpy, đối tượng scaler và DataFrame đã chuẩn hóa
     return scaled_array, scaler, scaled_df

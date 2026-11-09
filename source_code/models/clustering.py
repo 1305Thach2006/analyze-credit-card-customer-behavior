@@ -1,131 +1,188 @@
-# Import thu vien KMeans tu scikit-learn de phan cum du lieu
+# Import thư viện KMeans từ scikit-learn để phân cụm dữ liệu
 from sklearn.cluster import KMeans
-# Import thu vien PCA tu scikit-learn de giam chieu du lieu
+# Import thư viện PCA từ scikit-learn để giảm chiều dữ liệu
 from sklearn.decomposition import PCA
-# Import thu vien tinh chi so do luong phan tach Silhouette Score
+# Import thư viện tính chỉ số đo lường phân tách Silhouette Score
 from sklearn.metrics import silhouette_score
-# Import thu vien tinh chi so danh gia do dac cum Davies-Bouldin Index
+# Import thư viện tính chỉ số đánh giá độ đặc cụm Davies-Bouldin Index
 from sklearn.metrics import davies_bouldin_score
-# Import thu vien numpy de tinh toan ma tran va mang so hoc
+# Import thư viện numpy để tính toán ma trận và mảng số học
 import numpy as np
-# Import thu vien pandas de quan ly bang ket qua thong ke
+# Import thư viện pandas để quản lý bảng kết quả thống kê
 import pandas as pd
-# Import thu vien typing de dinh nghia kieu du lieu
+# Import thư viện typing để định nghĩa kiểu dữ liệu
 from typing import Dict, Any, Tuple
 
-# Lop thuc thi quy trinh phan cum bang thuat toan K-Means va PCA
+# Lớp thực thi quy trình phân cụm bằng thuật toán K-Means và PCA
 class CustomerClustering:
-    # Ham khoi tao lop CustomerClustering voi so cum va hat giong ngau nhien
+    # Hàm khởi tạo lớp CustomerClustering với số cụm và hạt giống ngẫu nhiên
     def __init__(self, n_clusters: int = 4, random_state: int = 42):
-        # Luu so luong cum can phan chia
+        # Lưu số lượng cụm cần phân chia
         self.n_clusters = n_clusters
-        # Luu gia tri hat giong de co dinh ket qua
+        # Lưu giá trị hạt giống để cố định kết quả
         self.random_state = random_state
-        # Khoi tao mo hinh KMeans su dung thuat toan k-means++ khoi tao tam cum
+        # Khởi tạo mô hình KMeans sử dụng thuật toán k-means++ khởi tạo tâm cụm
         self.kmeans = KMeans(n_clusters=self.n_clusters, init='k-means++', n_init=10, max_iter=300, random_state=self.random_state)
-        # Khoi tao doi tuong PCA giam xuong 2 chieu de truc quan hoa
+        # Khởi tạo đối tượng PCA giảm xuống 2 chiều để trực quan hóa
         self.pca = PCA(n_components=2, random_state=self.random_state)
-        # Bien luu tru mang nhan cum cua toan bo tap du lieu
+        # Biến lưu trữ mảng nhãn cụm của toàn bộ tập dữ liệu
         self.labels_ = None
 
-    # Ham huan luyen va du doan nhan cum cho toan bo khach hang
+    # Hàm chạy thực nghiệm quét các giá trị k từ 2 đến 6 để kiểm định và tối ưu hóa số cụm
+    def evaluate_k_range(self, X: np.ndarray, k_range=range(2, 7), sample_size: int = 10000) -> pd.DataFrame:
+        # In thông báo bắt đầu thực nghiệm quét số cụm k
+        print(f"[CLUSTERING] Bắt đầu thực nghiệm quét số cụm k từ {min(k_range)} đến {max(k_range)}...")
+        # Danh sách lưu trữ kết quả đánh giá của từng giá trị k
+        k_results = []
+        # Kiểm tra nếu dữ liệu lớn hơn sample_size thì lấy mẫu để tính toán nhanh chóng
+        if len(X) > sample_size:
+            # Khởi tạo bộ sinh số ngẫu nhiên với seed cố định
+            rng = np.random.RandomState(self.random_state)
+            # Chọn các chỉ số mẫu ngẫu nhiên
+            sample_idx = rng.choice(len(X), size=sample_size, replace=False)
+            # Trích xuất tập ma trận mẫu để đánh giá Silhouette và DBI
+            X_eval = X[sample_idx]
+        # Trường hợp dữ liệu nhỏ hơn sample_size
+        else:
+            # Sử dụng toàn bộ ma trận đặc trưng
+            X_eval = X
+            # Đặt sample_idx là None
+            sample_idx = None
+        # Lặp qua từng giá trị k trong dải k_range
+        for k in k_range:
+            # Khởi tạo mô hình KMeans với k hiện tại
+            km = KMeans(n_clusters=k, init='k-means++', n_init=10, max_iter=300, random_state=self.random_state)
+            # Thực hiện huấn luyện và gán nhãn cụm trên toàn bộ ma trận X
+            labels_all = km.fit_predict(X)
+            # Lấy giá trị quán tính nội cụm WCSS
+            inertia = float(km.inertia_)
+            # Trích xuất nhãn cụm tương ứng với tập mẫu đánh giá
+            labels_eval = labels_all[sample_idx] if sample_idx is not None else labels_all
+            # Tính hệ số phân tách Silhouette Score trên tập mẫu
+            sil = float(silhouette_score(X_eval, labels_eval))
+            # Tính chỉ số Davies-Bouldin Index trên tập mẫu
+            dbi = float(davies_bouldin_score(X_eval, labels_eval))
+            # In kết quả chỉ số của k hiện tại ra console
+            print(f"[CLUSTERING] -> k = {k}: WCSS = {inertia:.1f} | Silhouette = {sil:.2f} | DBI = {dbi:.2f}")
+            # Lưu các thông số vào danh sách kết quả
+            k_results.append({
+                # Giá trị số cụm k đang thử nghiệm
+                'k': k,
+                # Tổng bình phương khoảng cách nội cụm WCSS (Inertia)
+                'Inertia_WCSS': round(inertia, 2),
+                # Hệ số tách biệt Silhouette Score
+                'Silhouette_Score': round(sil, 2),
+                # Chỉ số đánh giá độ đặc Davies-Bouldin Index
+                'Davies_Bouldin_Index': round(dbi, 2)
+            # Kết thúc khối phần tử danh sách
+            })
+        # Chuyển đổi danh sách thành DataFrame của pandas
+        results_df = pd.DataFrame(k_results)
+        # Trả về bảng kết quả thực nghiệm
+        return results_df
+
+    # Hàm huấn luyện và dự đoán nhãn cụm cho toàn bộ khách hàng
     def fit_predict(self, X: np.ndarray) -> np.ndarray:
-        # In thong bao bat dau phan cum K-Means
-        print(f"[CLUSTERING] Bat dau phan cum K-Means voi k = {self.n_clusters}...")
-        # Thuc hien huan luyen va gan nhan cum cho tap du lieu
+        # In thông báo bắt đầu phân cụm K-Means
+        print(f"[CLUSTERING] Bắt đầu phân cụm K-Means với k = {self.n_clusters}...")
+        # Thực hiện huấn luyện và gán nhãn cụm cho tập dữ liệu
         self.labels_ = self.kmeans.fit_predict(X)
-        # In thong bao da hoan thanh phan cum
-        print("[CLUSTERING] Phan cum K-Means hoan tat!")
-        # Tra ve mang chua nhan cum cua cac khach hang
+        # In thông báo đã hoàn thành phân cụm
+        print("[CLUSTERING] Phân cụm K-Means hoàn tất!")
+        # Trả về mảng chứa nhãn cụm của các khách hàng
         return self.labels_
 
-    # Ham danh gia chat luong phan cum bang cac chi so khoa hoc
+    # Hàm đánh giá chất lượng phân cụm bằng các chỉ số khoa học
     def evaluate(self, X: np.ndarray, sample_size: int = 10000) -> Dict[str, float]:
-        # In thong bao dang tinh toan chi so danh gia
-        print("[CLUSTERING] Dang tinh toan Silhouette Score va Davies-Bouldin Index...")
-        # Kiem tra neu kich thuoc du lieu lon thi lay mau ngau nhien de toi uu thoi gian
+        # In thông báo đang tính toán chỉ số đánh giá
+        print("[CLUSTERING] Đang tính toán Silhouette Score và Davies-Bouldin Index...")
+        # Kiểm tra nếu kích thước dữ liệu lớn thì lấy mẫu ngẫu nhiên để tối ưu thời gian
         if len(X) > sample_size:
-            # Khoi tao bo sinh so ngau nhien voi seed co dinh
+            # Khởi tạo bộ sinh số ngẫu nhiên với seed cố định
             rng = np.random.RandomState(self.random_state)
-            # Chon ngau nhien cac chi so mau
+            # Chọn ngẫu nhiên các chỉ số mẫu
             sample_idx = rng.choice(len(X), size=sample_size, replace=False)
-            # Lay tap du lieu con theo chi so mau
+            # Lấy tập dữ liệu con theo chỉ số mẫu
             X_eval = X[sample_idx]
-            # Lay nhan cum tuong ung theo chi so mau
+            # Lấy nhãn cụm tương ứng theo chỉ số mẫu
             labels_eval = self.labels_[sample_idx]
-        # Truong hop du lieu nho hon sample_size thi su dung toan bo
+        # Trường hợp dữ liệu nhỏ hơn sample_size thì sử dụng toàn bộ
         else:
-            # Su dung toan bo ma tran dac trung
+            # Sử dụng toàn bộ ma trận đặc trưng
             X_eval = X
-            # Su dung toan bo mang nhan cum
+            # Sử dụng toàn bộ mảng nhãn cụm
             labels_eval = self.labels_
-        # Tinh toan he so Silhouette Score do do phan tach giua cac cum
+        # Tính toán hệ số Silhouette Score đo độ phân tách giữa các cụm
         sil_score = float(silhouette_score(X_eval, labels_eval))
-        # Tinh toan chi so Davies-Bouldin Index danh gia do dac va tach biet cum
+        # Tính toán chỉ số Davies-Bouldin Index đánh giá độ đặc và tách biệt cụm
         db_index = float(davies_bouldin_score(X_eval, labels_eval))
-        # In ket qua chi so danh gia ra man hinh
-        print(f"[CLUSTERING] -> Silhouette Score: {sil_score:.4f} | Davies-Bouldin Index: {db_index:.4f}")
-        # Tra ve tu dien chua hai chi so do luong
-        return {"Silhouette_Score": round(sil_score, 4), "Davies_Bouldin_Index": round(db_index, 4)}
+        # In kết quả chỉ số đánh giá ra màn hình
+        print(f"[CLUSTERING] -> Silhouette Score: {sil_score:.2f} | Davies-Bouldin Index: {db_index:.2f}")
+        # Trả về từ điển chứa hai chỉ số đo lường
+        return {"Silhouette_Score": round(sil_score, 2), "Davies_Bouldin_Index": round(db_index, 2)}
 
-    # Ham giam chieu du lieu xuong 2 chieu bang PCA
+    # Hàm giảm chiều dữ liệu xuống 2 chiều bằng PCA
     def fit_transform_pca(self, X: np.ndarray) -> np.ndarray:
-        # In thong bao bat dau giam chieu du lieu bang PCA
-        print("[CLUSTERING] Chieu du lieu xuong khong gian PCA 2D...")
-        # Thuc hien giam chieu khong gian du lieu xuong 2 thanh phan chinh
+        # In thông báo bắt đầu giảm chiều dữ liệu bằng PCA
+        print("[CLUSTERING] Chiếu dữ liệu xuống không gian PCA 2D...")
+        # Thực hiện giảm chiều không gian dữ liệu xuống 2 thành phần chính
         pca_2d = self.pca.fit_transform(X)
-        # Tinh tong ty le phuong sai duoc giai thich boi 2 thanh phan PCA
+        # Tính tổng tỷ lệ phương sai được giải thích bởi 2 thành phần PCA
         explained_variance = float(np.sum(self.pca.explained_variance_ratio_) * 100)
-        # In thong tin phuong sai ra man hinh console
-        print(f"[CLUSTERING] 2 thanh phan PCA giai thich duoc {explained_variance:.2f}% phuong sai du lieu.")
-        # Tra ve ma tran 2 chieu sau khi giam chieu
+        # In thông tin phương sai ra màn hình console
+        print(f"[CLUSTERING] 2 thành phần PCA giải thích được {explained_variance:.2f}% phương sai dữ liệu.")
+        # Trả về ma trận 2 chiều sau khi giảm chiều
         return pca_2d
 
-    # Ham tong hop gia tri trung binh cua cac dac trung theo tung cum de xay dung persona
+    # Hàm tính toán các giá trị thống kê trung bình để mô tả chân dung khách hàng của 4 cụm
     def summarize_personas(self, df: pd.DataFrame, cluster_labels: np.ndarray) -> pd.DataFrame:
-        # Tao ban sao DataFrame de tranh anh huong den du lieu goc
-        df_copy = df.copy()
-        # Gan nhan cum vao cot moi co ten Cluster
-        df_copy["Cluster"] = cluster_labels
-        # Danh sach cac dac trung quan trong can tong hop theo cum
-        summary_features = [
-            # Cot tong chi tieu hang thang
-            "Monthly_Spending",
-            # Cot han muc tin dung duoc cap
-            "Credit_Limit",
-            # Cot ty le su dung han muc tin dung
-            "Credit_Utilization",
-            # Cot diem tin dung cua khach hang
-            "Credit_Score",
-            # Cot ty le thanh toan no hang thang
-            "Payment_Ratio",
-            # Cot ty trong chi tieu mua sam online
-            "Pct_Online",
-            # Cot ty trong chi tieu tap hoa
-            "Pct_Grocery",
-            # Cot ty trong chi tieu nhien lieu
-            "Pct_Fuel",
-            # Cot ty trong chi tieu an uong nha hang
-            "Pct_Dining",
-            # Cot ty trong chi tieu du lich
-            "Pct_Travel",
-            # Cot ty trong chi tieu giai tri
-            "Pct_Entertainment",
-            # Cot ty trong chi tieu hoa don sinh hoat
-            "Pct_Utility",
-            # Cot ty le doi diem thuong
-            "Redemption_Rate",
-            # Cot co canh bao rui ro tin dung
-            "Risk_Flag"
-        # Ket thuc khoi danh sach hoac tu dien
+        # In thông báo bắt đầu tổng hợp thống kê chân dung cụm
+        print("[CLUSTERING] Đang tổng hợp số liệu thống kê persona cho từng cụm...")
+        # Tạo bản sao DataFrame để không làm thay đổi dữ liệu gốc
+        data_with_clusters = df.copy()
+        # Gán nhãn cụm vào bảng dữ liệu
+        data_with_clusters['Cluster'] = cluster_labels
+        # Danh sách các cột chỉ số cần tính toán giá trị trung bình
+        numeric_cols = [
+            # Chi tiêu trung bình hàng tháng
+            'Monthly_Spending',
+            # Tỷ lệ sử dụng hạn mức tín dụng trung bình
+            'Credit_Utilization',
+            # Điểm tín dụng trung bình
+            'Credit_Score',
+            # Tỷ lệ thanh toán nợ trung bình
+            'Payment_Ratio',
+            # Tỷ lệ chi tiêu danh mục mua sắm trực tuyến
+            'Pct_Online',
+            # Tỷ lệ chi tiêu danh mục tạp hóa thực phẩm
+            'Pct_Grocery',
+            # Tỷ lệ chi tiêu danh mục nhiên liệu xăng dầu
+            'Pct_Fuel',
+            # Tỷ lệ chi tiêu danh mục nhà hàng ăn uống
+            'Pct_Dining',
+            # Tỷ lệ chi tiêu danh mục du lịch
+            'Pct_Travel',
+            # Tỷ lệ chi tiêu danh mục giải trí
+            'Pct_Entertainment',
+            # Tỷ lệ chi tiêu danh mục hóa đơn tiện ích
+            'Pct_Utility',
+            # Tỷ lệ chi tiêu hưởng thụ
+            'Discretionary_Ratio',
+            # Tỷ lệ chi tiêu thiết yếu
+            'Essential_Ratio'
+        # Kết thúc danh sách cột tính trung bình
         ]
-        # Tinh gia tri trung binh cho tung dac trung nhom theo cum
-        summary = df_copy.groupby("Cluster")[summary_features].mean().round(2)
-        # Tinh so luong khach hang thuoc tung cum
-        summary["Customer_Count"] = df_copy.groupby("Cluster").size()
-        # Tinh ty le phan tram khach hang cua tung cum tren tong the
-        summary["Percentage"] = (summary["Customer_Count"] / len(df_copy) * 100).round(2)
-        # Dat ten cho chi muc cum
-        summary.index.name = "Cluster"
-        # Tra ve bang tong hop cac persona dinh luong
-        return summary
+        # Tính giá trị trung bình của các cột chỉ số theo từng cụm
+        cluster_summary = data_with_clusters.groupby('Cluster')[numeric_cols].mean()
+        # Đếm số lượng khách hàng trong mỗi cụm
+        cluster_counts = data_with_clusters['Cluster'].value_counts().sort_index()
+        # Chèn cột số lượng khách hàng vào vị trí đầu tiên của bảng
+        cluster_summary.insert(0, 'Customer_Count', cluster_counts)
+        # Tính tỷ lệ phần trăm số lượng khách hàng của từng cụm
+        cluster_summary.insert(1, 'Customer_Percentage', (cluster_counts / len(data_with_clusters)) * 100.0)
+        # Làm tròn tất cả các giá trị trong bảng đến 2 chữ số thập phân
+        cluster_summary = cluster_summary.round(2)
+        # In thông báo đã hoàn thành tính toán thống kê
+        print("[CLUSTERING] Tổng hợp số liệu persona 4 cụm hoàn tất!")
+        # Trả về bảng thống kê persona
+        return cluster_summary
