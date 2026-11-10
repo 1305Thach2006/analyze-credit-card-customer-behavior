@@ -1,5 +1,5 @@
 Model,R2_Score,RMSE,MAE
-Linear Regression,0.92,161.65,86.72
-Random Forest Regressor,0.93,152.69,70.06
-LightGBM Regressor,0.93,151.87,74.85
-Stacking Hybrid Ensemble,0.93,149.54,71.03
+Linear Regression,0.9202,161.7395,86.9681
+Random Forest Regressor,0.9285,153.1616,70.3848
+LightGBM Regressor,0.9291,152.438,75.3326
+Stacking Hybrid Ensemble,0.9314,150.0302,71.1952

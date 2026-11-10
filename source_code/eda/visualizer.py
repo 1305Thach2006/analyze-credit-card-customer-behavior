@@ -1,3 +1,7 @@
+# Import thư viện warnings để ẩn các cảnh báo phiên bản tương lai của scikit-learn
+import warnings
+warnings.filterwarnings("ignore", category=FutureWarning)
+
 # Import thư viện os để thao tác với đường dẫn và tệp tin
 import os
 # Import thư viện matplotlib để vẽ đồ thị khoa học
@@ -203,9 +207,55 @@ def plot_model_benchmark(benchmark_df: pd.DataFrame, output_path: str) -> None:
     for bar in bars:
         # Lấy chiều cao của cột
         yval = bar.get_height()
-        # In giá trị lên trên đỉnh cột với định dạng đậm nét
-        plt.text(bar.get_x() + bar.get_width()/2.0, yval + 0.02, f'{yval:.2f}', ha='center', va='bottom', fontweight='bold', fontsize=10)
+        # In giá trị lên trên đỉnh cột với định dạng đậm nét 4 chữ số thập phân
+        plt.text(bar.get_x() + bar.get_width()/2.0, yval + 0.02, f'{yval:.4f}', ha='center', va='bottom', fontweight='bold', fontsize=10)
     # Căn chỉnh bố cục khung vẽ
     plt.tight_layout()
     # Gọi hàm lưu ảnh an toàn chống khóa tệp
     save_plot_safely(output_path, dpi=300)
+
+# Hàm vẽ biểu đồ đường cong Qini đối chuẩn hiệu năng các mô hình Uplift Modeling
+def plot_uplift_qini_curve(y_test: np.ndarray, uplift_t: np.ndarray, uplift_s: np.ndarray, trt_test: np.ndarray, output_path: str) -> None:
+    # Import hàm qini_curve từ scikit-uplift
+    from sklift.metrics import qini_curve, qini_auc_score
+    # Tạo khung hình vẽ với kích thước 10x6 inch
+    plt.figure(figsize=(10, 6))
+
+    # Tính toán tọa độ đường cong Qini cho mô hình T-Learner
+    x_t, y_t = qini_curve(y_test, uplift_t, trt_test)
+    # Tính tọa độ đường cong Qini cho mô hình S-Learner
+    x_s, y_s = qini_curve(y_test, uplift_s, trt_test)
+
+    # Tính điểm Qini AUC cho T-Learner
+    qini_score_t = qini_auc_score(y_test, uplift_t, trt_test)
+    # Tính điểm Qini AUC cho S-Learner
+    qini_score_s = qini_auc_score(y_test, uplift_s, trt_test)
+
+    # Vẽ đường cong Qini của T-Learner (màu xanh dương đậm SOTA) với 4 chữ số thập phân
+    plt.plot(x_t, y_t, label=f'T-Learner (TwoModels) - Qini Score: {qini_score_t:.4f}', color='#1E40AF', linewidth=2.5)
+    # Vẽ đường cong Qini của S-Learner (màu vàng cam) với 4 chữ số thập phân
+    plt.plot(x_s, y_s, label=f'S-Learner (SoloModel) - Qini Score: {qini_score_s:.4f}', color='#D97706', linewidth=2.0)
+
+    # Vẽ đường tiếp cận ngẫu nhiên (Random Baseline) từ gốc (0,0) đến điểm cuối
+    plt.plot([0, x_t[-1]], [0, y_t[-1]], label='Random Targeting (Cơ sở ngẫu nhiên)', color='#64748B', linestyle='--', linewidth=1.5)
+
+    # Tô màu dải hiệu năng vượt trội giữa T-Learner và Random baseline
+    baseline_y = np.linspace(0, y_t[-1], len(x_t))
+    plt.fill_between(x_t, y_t, baseline_y, color='#1E40AF', alpha=0.1, label='Hiệu quả gia tăng (Incremental Uplift Gain)')
+
+    # Đặt tiêu đề biểu đồ bằng tiếng Việt có dấu
+    plt.title('Đường cong Qini (Qini Curve) đối chuẩn mô hình Uplift Modeling dự báo hiệu ứng ưu đãi', fontsize=12, fontweight='bold')
+    # Đặt nhãn trục hoành
+    plt.xlabel('Số lượng khách hàng được can thiệp ưu đãi (Targeted Population)', fontsize=11, fontweight='bold')
+    # Đặt nhãn trục tung
+    plt.ylabel('Chuyển đổi gia tăng tích lũy (Cumulative Incremental Gain)', fontsize=11, fontweight='bold')
+    # Bật lưới tọa độ
+    plt.grid(True, linestyle=':', alpha=0.6)
+    # Hiển thị chú thích ở góc trên bên trái
+    plt.legend(loc='upper left', fontsize=10, frameon=True)
+
+    # Căn chỉnh bố cục khung vẽ
+    plt.tight_layout()
+    # Gọi hàm lưu ảnh an toàn chống khóa tệp
+    save_plot_safely(output_path, dpi=300)
+

@@ -1,0 +1,5 @@
+Uplift_Segment,Customer_Count,Distribution_Pct,Mean_Uplift_Score,Mean_Monthly_Spending,Mean_Credit_Limit,Mean_Credit_Score,Mean_Credit_Utilization,Mean_Payment_Ratio
+Lost Causes,10366,20.732,-0.0223,72938.6703,696011.5763,531.7453,60.3271,48.862
+Persuadables,20027,40.054,0.3544,80342.5545,784666.3504,675.2034,33.3766,88.1883
+Sleeping Dogs,2393,4.786,0.1791,13896.3793,85160.0501,651.6377,38.3381,82.9127
+Sure Things,17214,34.428,0.1751,75243.0253,717480.1905,630.6198,43.3086,78.1805

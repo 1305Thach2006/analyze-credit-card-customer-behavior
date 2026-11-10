@@ -82,18 +82,18 @@ class RewardValidationEngine:
             rmse = float(root_mean_squared_error(y_test, y_pred))
             # Tính sai số tuyệt đối trung bình MAE
             mae = float(mean_absolute_error(y_test, y_pred))
-            # In kết quả đo lường của mô hình ra màn hình console
-            print(f'[VALIDATION] -> {model_name}: R2 = {r2:.2f} | RMSE = {rmse:.2f} | MAE = {mae:.2f}')
-            # Lưu thông số đánh giá vào danh sách kết quả
+            # In kết quả đo lường của mô hình ra màn hình console với độ chính xác 4 chữ số thập phân
+            print(f'[VALIDATION] -> {model_name}: R2 = {r2:.4f} | RMSE = {rmse:.4f} | MAE = {mae:.4f}')
+            # Lưu thông số đánh giá vào danh sách kết quả làm tròn 4 chữ số thập phân
             results_list.append({
                 # Tên mô hình đang đánh giá
                 'Model': model_name,
                 # Hệ số xác định R2 Score
-                'R2_Score': round(r2, 2),
+                'R2_Score': round(r2, 4),
                 # Sai số căn quân phương trung bình RMSE
-                'RMSE': round(rmse, 2),
+                'RMSE': round(rmse, 4),
                 # Sai số tuyệt đối trung bình MAE
-                'MAE': round(mae, 2)
+                'MAE': round(mae, 4)
             # Kết thúc phần tử kết quả đánh giá
             })
         # Chuyển danh sách kết quả thành DataFrame của pandas

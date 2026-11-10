@@ -62,18 +62,18 @@ class CustomerClustering:
             sil = float(silhouette_score(X_eval, labels_eval))
             # Tính chỉ số Davies-Bouldin Index trên tập mẫu
             dbi = float(davies_bouldin_score(X_eval, labels_eval))
-            # In kết quả chỉ số của k hiện tại ra console
-            print(f"[CLUSTERING] -> k = {k}: WCSS = {inertia:.1f} | Silhouette = {sil:.2f} | DBI = {dbi:.2f}")
-            # Lưu các thông số vào danh sách kết quả
+            # In kết quả chỉ số của k hiện tại ra console làm tròn 4 chữ số thập phân
+            print(f"[CLUSTERING] -> k = {k}: WCSS = {inertia:.2f} | Silhouette = {sil:.4f} | DBI = {dbi:.4f}")
+            # Lưu các thông số vào danh sách kết quả làm tròn 4 chữ số thập phân
             k_results.append({
                 # Giá trị số cụm k đang thử nghiệm
                 'k': k,
                 # Tổng bình phương khoảng cách nội cụm WCSS (Inertia)
                 'Inertia_WCSS': round(inertia, 2),
                 # Hệ số tách biệt Silhouette Score
-                'Silhouette_Score': round(sil, 2),
+                'Silhouette_Score': round(sil, 4),
                 # Chỉ số đánh giá độ đặc Davies-Bouldin Index
-                'Davies_Bouldin_Index': round(dbi, 2)
+                'Davies_Bouldin_Index': round(dbi, 4)
             # Kết thúc khối phần tử danh sách
             })
         # Chuyển đổi danh sách thành DataFrame của pandas
@@ -116,10 +116,10 @@ class CustomerClustering:
         sil_score = float(silhouette_score(X_eval, labels_eval))
         # Tính toán chỉ số Davies-Bouldin Index đánh giá độ đặc và tách biệt cụm
         db_index = float(davies_bouldin_score(X_eval, labels_eval))
-        # In kết quả chỉ số đánh giá ra màn hình
-        print(f"[CLUSTERING] -> Silhouette Score: {sil_score:.2f} | Davies-Bouldin Index: {db_index:.2f}")
-        # Trả về từ điển chứa hai chỉ số đo lường
-        return {"Silhouette_Score": round(sil_score, 2), "Davies_Bouldin_Index": round(db_index, 2)}
+        # In kết quả chỉ số đánh giá ra màn hình với độ chính xác 4 chữ số thập phân
+        print(f"[CLUSTERING] -> Silhouette Score: {sil_score:.4f} | Davies-Bouldin Index: {db_index:.4f}")
+        # Trả về từ điển chứa hai chỉ số đo lường làm tròn 4 chữ số thập phân
+        return {"Silhouette_Score": round(sil_score, 4), "Davies_Bouldin_Index": round(db_index, 4)}
 
     # Hàm giảm chiều dữ liệu xuống 2 chiều bằng PCA
     def fit_transform_pca(self, X: np.ndarray) -> np.ndarray:

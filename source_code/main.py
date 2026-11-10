@@ -8,6 +8,10 @@ if hasattr(sys.stdout, 'reconfigure'):
     # Thiết lập lại bộ mã hóa đầu ra sang UTF-8
     sys.stdout.reconfigure(encoding='utf-8')
 
+# Import thư viện warnings để ẩn các cảnh báo phiên bản tương lai của scikit-learn
+import warnings
+warnings.filterwarnings("ignore", category=FutureWarning)
+
 # Import thư viện pandas để thao tác trên DataFrame
 import pandas as pd
 # Import thư viện numpy để thực hiện các phép toán ma trận
@@ -33,7 +37,14 @@ from data_pipeline.feature_engineering import engineer_credit_features
 from data_pipeline.preprocessor import preprocess_features
 
 # Import các hàm vẽ biểu đồ trực quan hóa từ eda/visualizer.py
-from eda.visualizer import plot_correlation_heatmap, plot_category_spending_boxplot, plot_pca_clusters, plot_kmeans_k_optimization, plot_model_benchmark
+from eda.visualizer import (
+    plot_correlation_heatmap,
+    plot_category_spending_boxplot,
+    plot_pca_clusters,
+    plot_kmeans_k_optimization,
+    plot_model_benchmark,
+    plot_uplift_qini_curve
+)
 
 # Import bộ phân cụm khách hàng K-Means và PCA từ models/clustering.py
 from models.clustering import CustomerClustering
@@ -41,6 +52,8 @@ from models.clustering import CustomerClustering
 from models.recommender import CustomerBehaviorScorer
 # Import lớp đối chuẩn các mô hình Machine Learning từ models/validation_models.py
 from models.validation_models import RewardValidationEngine
+# Import mô-đun học máy nhân quả Uplift Modeling từ models/uplift_engine.py
+from models.uplift_engine import UpliftPersonalizationEngine
 
 # Hàm lưu DataFrame an toàn tránh lỗi bị khóa tệp khi người dùng mở trên Excel
 def save_dataframe_safely(df: pd.DataFrame, file_path: str) -> str:
@@ -114,7 +127,7 @@ def main():
     X_scaled, scaler, scaled_df = preprocess_features(df_engineered, cluster_features)
 
     # -------------------------------------------------------------
-    # BƯỚC 5: TỐI ƯU HÓA SỐ CỤM K (2->6), PHÂN CỤM K-MEANS VÀ PCA 2D
+    # BƯỚC 5: TỐI ƯU HÓA SỐ CỤM K (2 → 6), PHÂN CỤM K-MEANS VÀ PCA 2D
     # -------------------------------------------------------------
     # In thông báo bước thực nghiệm quét k và phân cụm
     print('\n[BƯỚC 5] Thực nghiệm quét số cụm k từ 2 đến 6, phân cụm K-Means và chiếu không gian PCA 2D...')
@@ -154,21 +167,54 @@ def main():
     save_dataframe_safely(personas_summary_df, personas_csv_path)
 
     # -------------------------------------------------------------
-    # BƯỚC 6: TÍNH ĐIỂM THƯỞNG ĐỘNG VÀ GỢI Ý ƯU ĐÃI THEO HÀNH VI
+    # BƯỚC 6: HỌC MÁY NHÂN QUẢ UPLIFT MODELING & TỐI ƯU HÓA ƯU ĐÃI
     # -------------------------------------------------------------
-    # In thông báo bước tính điểm thưởng và gợi ý
-    print('\n[BƯỚC 6] Tính toán chỉ số điểm thưởng và tổng hợp báo cáo cho từng khách hàng...')
-    # Khởi tạo bộ tính điểm và gợi ý dựa trên hệ số và ngưỡng rủi ro
+    # In thông báo bước huấn luyện Uplift Modeling
+    print('\n[BƯỚC 6] Huấn luyện học máy nhân quả Uplift Modeling (T-Learner vs S-Learner) và phân khúc khách hàng...')
+    # Khởi tạo bộ tính điểm thưởng động và kiểm tra rủi ro
     scorer = CustomerBehaviorScorer(BASE_REWARD_MULTIPLIERS, EXPENSE_BONUS_FACTORS, RISK_THRESHOLDS)
-
     # Tính toán chuỗi điểm thưởng động cho toàn bộ khách hàng
     df_engineered['Dynamic_Reward_Points'] = scorer.calculate_dynamic_reward_points(df_engineered)
 
-    # Huấn luyện thuật toán k-NN tìm láng giềng riêng biệt trên từng cụm
-    scorer.fit_knn_by_cluster(df_engineered, cluster_features, cluster_col='Cluster')
+    # Khởi tạo động cơ Uplift Modeling
+    uplift_engine = UpliftPersonalizationEngine(random_state=RANDOM_STATE)
+    # Thiết lập biến can thiệp Treatment và biến mục tiêu Outcome
+    treatment, outcome = uplift_engine.prepare_uplift_data(df_engineered)
 
-    # Tổng hợp báo cáo phân tích chi tiết cho từng khách hàng trên toàn bộ 50.000 dòng
-    customer_report_df = scorer.generate_customer_report(df_engineered)
+    # Tập hợp các đặc trưng đầu vào phục vụ mô hình Uplift
+    uplift_features = cluster_features + ['Monthly_Spending', 'Annual_Income', 'Credit_Limit', 'Credit_Score']
+    # Chuẩn hóa tập đặc trưng đầu vào cho Uplift
+    X_uplift = StandardScaler().fit_transform(df_engineered[uplift_features].values)
+
+    # Huấn luyện và đối chuẩn T-Learner vs S-Learner trên 80% Train / 20% Test
+    uplift_metrics = uplift_engine.fit_and_evaluate(X_uplift, outcome, treatment)
+
+    # Đường dẫn lưu biểu đồ đường cong Qini
+    qini_img_path = os.path.join(FIGURES_DIR, 'uplift_qini_curve.png')
+    # Vẽ và lưu biểu đồ đường cong Qini với chú thích tiếng Việt có dấu
+    plot_uplift_qini_curve(
+        uplift_metrics['y_test'],
+        uplift_metrics['uplift_preds_t'],
+        uplift_metrics['uplift_preds_s'],
+        uplift_metrics['treatment_test'],
+        qini_img_path
+    )
+
+    # Dự báo điểm Uplift Score cho toàn bộ 50.000 khách hàng bằng mô hình T-Learner
+    full_uplift_scores = uplift_engine.predict_full_dataset(X_uplift)
+
+    # Phân loại 50.000 khách hàng vào 4 nhóm nhân quả kinh điển
+    uplift_segments = uplift_engine.assign_uplift_quadrants(df_engineered, full_uplift_scores)
+
+    # Tổng hợp báo cáo định lượng 4 nhóm nhân quả
+    uplift_summary_df = uplift_engine.generate_uplift_summary_report(df_engineered, full_uplift_scores, uplift_segments)
+    # Đường dẫn lưu báo cáo phân khúc nhân quả
+    uplift_summary_csv_path = os.path.join(REPORTS_DIR, 'uplift_segments_summary.csv')
+    # Lưu báo cáo phân khúc nhân quả ra tệp CSV an toàn
+    save_dataframe_safely(uplift_summary_df, uplift_summary_csv_path)
+
+    # Tổng hợp báo cáo phân tích chi tiết cho từng khách hàng tích hợp Uplift
+    customer_report_df = scorer.generate_customer_report(df_engineered, full_uplift_scores, uplift_segments)
     # Đường dẫn lưu tệp CSV báo cáo chi tiết từng khách hàng
     customer_report_path = os.path.join(REPORTS_DIR, 'customer_level_analysis_report.csv')
     # Xuất toàn bộ báo cáo từng khách hàng ra tệp CSV
