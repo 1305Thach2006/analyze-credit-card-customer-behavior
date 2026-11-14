@@ -220,6 +220,13 @@ def main():
     # Xuất toàn bộ báo cáo từng khách hàng ra tệp CSV
     save_dataframe_safely(customer_report_df, customer_report_path)
 
+    # Trích xuất bảng minh họa mẫu 4 khách hàng đại diện cho 4 nhóm nhân quả Uplift
+    sample_recommendations_df = scorer.generate_sample_recommendations(customer_report_df)
+    # Đường dẫn lưu tệp CSV bảng mẫu đề xuất ưu đãi
+    sample_recommendations_path = os.path.join(REPORTS_DIR, 'sample_recommendations.csv')
+    # Lưu bảng mẫu ra CSV an toàn phục vụ thuyết trình slide và báo cáo
+    save_dataframe_safely(sample_recommendations_df, sample_recommendations_path)
+
     # -------------------------------------------------------------
     # BƯỚC 7: KIỂM CHỨNG MÔ HÌNH MACHINE LEARNING VÀ MÔ HÌNH LAI STACKING
     # -------------------------------------------------------------

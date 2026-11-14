@@ -161,3 +161,65 @@ class CustomerBehaviorScorer:
             "spending": round(float(customer_row['Monthly_Spending']), 4),
             "recommendation_strategy": recommendation_strategy
         }
+
+    # Hàm trích xuất 4 khách hàng mẫu đại diện cho 4 nhóm nhân quả Uplift phục vụ thuyết trình và báo cáo
+    def generate_sample_recommendations(self, customer_report_df: pd.DataFrame) -> pd.DataFrame:
+        # In thông báo trích xuất bảng mẫu
+        print("[SAMPLE] Đang trích xuất 4 khách hàng mẫu đại diện cho 4 nhóm nhân quả Uplift Modeling...")
+        
+        # 1. Khách hàng Persuadables: An toàn, nhạy bén ưu đãi cao nhất
+        c1 = customer_report_df[
+            (customer_report_df['Uplift_Segment'] == 'Persuadables') &
+            (customer_report_df['Risk_Status'] == 'SAFE') &
+            (customer_report_df['Dominant_Expense_Category'] == 'Online_Shopping_Spending')
+        ].sort_values(by='Uplift_Score', ascending=False)
+        row1 = c1.iloc[0].copy() if not c1.empty else customer_report_df[customer_report_df['Uplift_Segment'] == 'Persuadables'].iloc[0].copy()
+        row1['Proposed_Action'] = "Targeted incentive: Grant 15% cashback e-voucher for Online Shopping + 3x dynamic reward points on weekend transactions."
+
+        # 2. Khách hàng Sure Things: Tự thân chi tiêu cao, rủi ro thấp, trung thành
+        c2 = customer_report_df[
+            (customer_report_df['Uplift_Segment'] == 'Sure Things') &
+            (customer_report_df['Card_Type'].isin(['Signature', 'Platinum'])) &
+            (customer_report_df['Risk_Status'] == 'SAFE')
+        ].sort_values(by='Monthly_Spending', ascending=False)
+        row2 = c2.iloc[0].copy() if not c2.empty else customer_report_df[customer_report_df['Uplift_Segment'] == 'Sure Things'].iloc[0].copy()
+        row2['Proposed_Action'] = "Organic loyalty retention: Retain profit margin by waiving cash vouchers; provide premium non-monetary privileges (VIP Airport lounge access & Platinum concierge)."
+
+        # 3. Khách hàng Lost Causes: Vi phạm ngưỡng an toàn rủi ro tín dụng (Safety Risk Gate)
+        c3 = customer_report_df[
+            (customer_report_df['Uplift_Segment'] == 'Lost Causes') &
+            (customer_report_df['Risk_Status'].str.startswith('HIGH_RISK'))
+        ].sort_values(by='Credit_Utilization', ascending=False)
+        row3 = c3.iloc[0].copy() if not c3.empty else customer_report_df[customer_report_df['Uplift_Segment'] == 'Lost Causes'].iloc[0].copy()
+        row3['Proposed_Action'] = "Safety risk gate activated: Freeze promotional marketing & credit limits; offer 0% APR Equal Monthly Installment (EMI) debt restructuring to mitigate default risk."
+
+        # 4. Khách hàng Sleeping Dogs: Chi tiêu rất thấp, ít tương tác, nhạy cảm tiêu cực
+        c4 = customer_report_df[
+            (customer_report_df['Uplift_Segment'] == 'Sleeping Dogs') &
+            (customer_report_df['Uplift_Score'] < 0)
+        ].sort_values(by='Monthly_Spending', ascending=True)
+        row4 = c4.iloc[0].copy() if not c4.empty else customer_report_df[customer_report_df['Uplift_Segment'] == 'Sleeping Dogs'].iloc[0].copy()
+        row4['Proposed_Action'] = "Dormancy preservation: Cease outbound marketing pushes and spam alerts to prevent churn/dormancy; maintain passive in-app utility cashbacks only."
+
+        # Tổng hợp thành DataFrame 4 dòng đại diện
+        sample_df = pd.DataFrame([row1, row2, row3, row4])
+
+        # Thứ tự các cột chuẩn trình bày khoa học
+        display_cols = [
+            "Customer_ID",
+            "Cluster",
+            "Card_Type",
+            "Monthly_Spending",
+            "Dominant_Expense_Category",
+            "Credit_Score",
+            "Credit_Utilization",
+            "Payment_Ratio",
+            "Dynamic_Reward_Points",
+            "Risk_Status",
+            "Uplift_Score",
+            "Uplift_Segment",
+            "Proposed_Action"
+        ]
+        sample_df = sample_df[display_cols].reset_index(drop=True)
+        print(f"[SAMPLE] Hoàn thành tạo bảng 4 khách hàng mẫu đại diện cho 4 góc phần tư nhân quả!")
+        return sample_df

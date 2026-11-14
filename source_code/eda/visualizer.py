@@ -89,16 +89,16 @@ def plot_pca_clusters(pca_2d: np.ndarray, labels: np.ndarray, output_path: str) 
     plt.figure(figsize=(9, 7))
     # Định nghĩa danh sách 4 màu sắc tương ứng với 4 cụm
     colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728']
-    # Định nghĩa tên nhãn cụm tiếng Việt có dấu cho từng nhóm
+    # Định nghĩa tên nhãn cụm đồng bộ với báo cáo và chân dung 4 nhóm
     cluster_names = [
         # Nhãn đại diện cho cụm 0
-        'Cụm 0: Gia đình / Siêu thị',
+        'Cụm 0: Family & Essentials',
         # Nhãn đại diện cho cụm 1
-        'Cụm 1: VIP / Phong cách sống',
+        'Cụm 1: VIP Lifestyle Spenders',
         # Nhãn đại diện cho cụm 2
-        'Cụm 2: Thận trọng / Tiềm năng',
+        'Cụm 2: Commuters & Everyday',
         # Nhãn đại diện cho cụm 3
-        'Cụm 3: Cảnh báo hạn mức'
+        'Cụm 3: Utility Bill Spenders'
     # Kết thúc danh sách tên cụm
     ]
     # Lặp qua từng cụm để vẽ các điểm dữ liệu

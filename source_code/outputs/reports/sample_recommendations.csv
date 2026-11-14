@@ -1,4 +1,5 @@
-﻿Customer_ID,Cluster,Dominant_Category,Monthly_Spending,Credit_Utilization,Credit_Score,Payment_Ratio,Calculated_Reward_Points,Risk_Status,Nearest_Neighbors
-CC100002,3,Grocery_Spending,115895.71,0.38,549,0.35,348,HIGH_RISK_CREDIT_SCORE,"['CC100002', 'CC118285', 'CC148998', 'CC102242', 'CC138362']"
-CC100000,0,Dining_Spending,36733.49,0.7,492,0.46,257,HIGH_RISK_CREDIT_SCORE,"['CC100000', 'CC145883', 'CC144034', 'CC105965', 'CC119892']"
-CC100007,0,Grocery_Spending,24788.08,0.5,556,0.61,50,SAFE,"['CC100007', 'CC126329', 'CC113028', 'CC104569', 'CC147539']"
+Customer_ID,Cluster,Card_Type,Monthly_Spending,Dominant_Expense_Category,Credit_Score,Credit_Utilization,Payment_Ratio,Dynamic_Reward_Points,Risk_Status,Uplift_Score,Uplift_Segment,Proposed_Action
+CC102838,1,Signature,401370.23,Online_Shopping_Spending,764,0.14,0.97,3371.5099,SAFE,0.5779,Persuadables,Targeted incentive: Grant 15% cashback e-voucher for Online Shopping + 3x dynamic reward points on weekend transactions.
+CC144133,2,Signature,672219.35,Grocery_Spending,734,0.18,0.95,3629.9845,SAFE,0.3006,Sure Things,Organic loyalty retention: Retain profit margin by waiving cash vouchers; provide premium non-monetary privileges (VIP Airport lounge access & Platinum concierge).
+CC144840,2,Gold,55415.8,Grocery_Spending,502,0.95,0.8,177.3306,HIGH_RISK_UTILIZATION,-0.1061,Lost Causes,Safety risk gate activated: Freeze promotional marketing & credit limits; offer 0% APR Equal Monthly Installment (EMI) debt restructuring to mitigate default risk.
+CC100569,3,Basic,3257.64,Utility_Bill_Spending,579,0.62,0.69,6.5153,SAFE,-0.0527,Sleeping Dogs,Dormancy preservation: Cease outbound marketing pushes and spam alerts to prevent churn/dormancy; maintain passive in-app utility cashbacks only.
